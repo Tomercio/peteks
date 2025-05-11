@@ -12,14 +12,6 @@
   <i>Take notes.  Keep them safe.  Feel comfy.</i>
 </p>
 
-<p align="center">
-  <!-- Badges (feel free to swap or remove) -->
-  <a href="https://github.com/your-username/peteks/actions"><img src="https://img.shields.io/github/actions/workflow/status/your-username/peteks/flutter.yml?branch=main&logo=github" alt="CI status" /></a>
-  <a href="https://github.com/your-username/peteks/releases"><img src="https://img.shields.io/github/v/release/your-username/peteks?logo=tag&label=latest" alt="Latest release" /></a>
-  <img src="https://img.shields.io/badge/built%20with-Flutter-3.x-blue?logo=flutter" alt="Built with Flutter" />
-  <img src="https://img.shields.io/github/license/your-username/peteks" alt="License" />
-</p>
-
 ---
 
 ## ✨ Highlights
