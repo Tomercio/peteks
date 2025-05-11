@@ -1,0 +1,138 @@
+name: peteks
+description: A beautiful, feature-rich notes app
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.5
+  flutter_local_notifications: ^19.2.0
+  timezone: ^0.10.1
+  flutter_sound: ^9.2.13
+  permission_handler: ^11.3.0
+  pattern_lock: ^2.0.0
+
+
+  # State management
+  provider: ^6.0.5
+
+  # Local storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # UI components and utilities
+  intl: 0.19.0
+  uuid: ^4.0.0
+
+  # App info and platform support
+  package_info_plus: ^8.3.0
+  path_provider: ^2.1.1
+  url_launcher: ^6.2.4
+
+  # Image handling
+  image_picker: ^1.0.4
+  photo_view: ^0.15.0 # For displaying images with zoom capability
+  cached_network_image: ^3.3.0 # For caching images (optional)
+
+  # Rich text editor
+  flutter_markdown: ^0.7.7+1
+  markdown: ^7.1.1
+
+  # Draggable grid view
+  reorderable_grid_view: ^2.0.0
+
+  # Paths
+  path: ^1.8.3
+
+  # Notifications
+
+
+  # Sharing
+  share_plus: ^7.2.1
+
+  # Google packages
+  googleapis: ^13.1.0
+  googleapis_auth: ^1.4.1
+  http: ^1.2.1
+  google_sign_in: ^6.2.1
+
+  # New dependency
+  flutter_quill: ^11.4.0
+  tuple: ^2.0.2
+
+  # Added crypto package
+  crypto: ^3.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+  # Build tools
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.6
+
+  # New dependency
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/playstore.png"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/peteks.png
+    - assets/icons/
+    - assets/icons/playstore.png
+
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/nunito/Nunito-Regular.ttf
+        - asset: assets/fonts/nunito/Nunito-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/nunito/Nunito-Black.ttf
+          weight: 900
+        - asset: assets/fonts/nunito/Nunito-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/nunito/Nunito-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/nunito/Nunito-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/nunito/Nunito-Light.ttf
+          weight: 300
+        - asset: assets/fonts/nunito/Nunito-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/nunito/Nunito-Italic.ttf
+          style: italic
+        - asset: assets/fonts/nunito/Nunito-BoldItalic.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/nunito/Nunito-BlackItalic.ttf
+          weight: 900
+          style: italic
+        - asset: assets/fonts/nunito/Nunito-ExtraBoldItalic.ttf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/nunito/Nunito-SemiBoldItalic.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/nunito/Nunito-MediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/nunito/Nunito-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/nunito/Nunito-ExtraLightItalic.ttf
+          weight: 200
+          style: italic
+

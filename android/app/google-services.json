@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "284333589813",
+    "project_id": "focused-beacon-459515-c6",
+    "storage_bucket": "focused-beacon-459515-c6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:284333589813:android:94df900a980cdd0d9a387c",
+        "android_client_info": {
+          "package_name": "com.example.peteks"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "284333589813-qsjjqjm1m4405hvvte3dn6rd7t2murmm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.peteks",
+            "certificate_hash": "246f301f68d0dbda1294b11358c490b31e749bd2"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2wV-mHtLR6wGs0EAkebV835h3IDsQyOw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
