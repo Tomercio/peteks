@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import '../ui/screens/note_screen.dart';
 import '../main.dart';
 import '../services/storage_service.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:android_intent_plus/android_intent.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -84,12 +86,61 @@ class NotificationService {
         );
   }
 
-  Future<void> scheduleNoteReminder(Note note) async {
+  Future<bool> ensureExactAlarmPermission() async {
+    final permission = Permission.scheduleExactAlarm;
+    if (await permission.isGranted) return true;
+    // Open system settings for the user to grant permission
+    final intent = const AndroidIntent(
+      action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
+    );
+    await intent.launch();
+    return false;
+  }
+
+  Future<void> scheduleNoteReminder(Note note, {BuildContext? context}) async {
     if (note.reminderDateTime == null) return;
 
     final id = note.id.hashCode;
     final scheduledDate = tz.TZDateTime.from(note.reminderDateTime!, tz.local);
 
+    bool canSchedule = true;
+    // Only check on Android
+    if (Theme.of(MyApp.navigatorKey.currentContext!).platform ==
+        TargetPlatform.android) {
+      canSchedule = await ensureExactAlarmPermission();
+    }
+
+    if (!canSchedule) {
+      if (context != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Please allow "Exact alarms" and try again.')),
+        );
+      }
+      // Fallback: schedule non-exact notification
+      await _flutterLocalNotificationsPlugin.zonedSchedule(
+        id,
+        'Note Reminder',
+        note.title.isNotEmpty ? note.title : 'Reminder',
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'note_reminder_channel',
+            'Note Reminders',
+            channelDescription: 'Reminders for your notes',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+        payload: note.id,
+      );
+      return;
+    }
+
+    // Normal exact schedule
     await _flutterLocalNotificationsPlugin.zonedSchedule(
       id,
       'Note Reminder',

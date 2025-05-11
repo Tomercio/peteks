@@ -122,7 +122,7 @@ class _NoteCardState extends State<NoteCard>
                     children: [
                       // Top content: title, icons, preview
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           if (widget.note.isPinned)
                             Padding(
@@ -149,18 +149,21 @@ class _NoteCardState extends State<NoteCard>
                             ),
                           ),
                           if (widget.onFavoriteToggle != null)
-                            IconButton(
-                              icon: Icon(
-                                widget.note.isFavorite
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                color: heartColor,
-                                size: 22,
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: IconButton(
+                                icon: Icon(
+                                  widget.note.isFavorite
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: heartColor,
+                                  size: 22,
+                                ),
+                                onPressed: widget.onFavoriteToggle,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: 'Favorite',
                               ),
-                              onPressed: widget.onFavoriteToggle,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              tooltip: 'Favorite',
                             ),
                         ],
                       ),
@@ -200,6 +203,9 @@ class _NoteCardState extends State<NoteCard>
                             }).toList(),
                           ),
                         ),
+                      // Add space between tags and date
+                      if (widget.note.tags.isNotEmpty)
+                        const SizedBox(height: 6),
                     ],
                   ),
                 ),

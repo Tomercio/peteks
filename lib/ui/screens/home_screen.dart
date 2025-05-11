@@ -154,35 +154,26 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ? 0
         : _notes.map((n) => n.position).reduce((a, b) => a > b ? a : b) + 1;
 
-    // Determine default color based on theme
-    final theme = Theme.of(context);
-    if (theme.brightness == Brightness.dark) {
-// dark mode
-    } else if (theme.colorScheme.primary == const Color(0xFFC2B280)) {
-// desert mode
-    } else {
-// light mode
-    }
-
+    // Create a temporary note without saving it
     final note = Note(
       title: '',
       content: '',
       position: maxPosition,
     );
 
-    await _storageService.saveNote(note);
-    _loadNotes();
-
     if (mounted) {
-      await Navigator.push(
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(
           settings: const RouteSettings(name: '/note'),
           builder: (context) => NoteScreen(note: note),
         ),
       );
-      if (!mounted) return;
-      _loadNotes();
+
+      // Only reload notes if we returned from the note screen
+      if (mounted && result == true) {
+        _loadNotes();
+      }
     }
   }
 
