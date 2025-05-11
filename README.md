@@ -41,3 +41,61 @@ flutter pub get
 
 # 3. run (device / emulator must be connected)
 flutter run
+
+---
+🛠 Tech Stack
+
+| Layer             | Libraries                                          |
+| ----------------- | -------------------------------------------------- |
+| **UI**            | Flutter 3, Provider, Flutter Quill                 |
+| **Storage**       | `hive` local DB, Google Drive REST v3              |
+| **Auth**          | `google_sign_in`, OAuth 2                          |
+| **Notifications** | `flutter_local_notifications`, exact-alarm support |
+| **Build**         | Gradle 8 / Kotlin 1.9, GitHub Actions CI           |
+
+---
+
+💡 Roadmap
+ iOS Drive-backup via Sign in with Apple + iCloud Drive
+
+ Tag system & fast search
+
+ Web companion app
+
+ Multi-select & batch actions
+
+Vote or open an issue with your ideas!
+
+---
+
+🤝 Contributing
+
+⭐ Star the repo (motivation FTW)
+
+1. Fork & create a feature branch
+
+2. flutter analyze must pass and flutter test should stay green
+
+3. Open a pull request – we love clean, well-commented code 🙂
+
+4. See CONTRIBUTING.md for style conventions.
+
+---
+
+📃 License
+Peteks is released under the MIT License © 2025 Tomer & Contributors.
+Feel free to use, modify, and share – just keep the credits.
+
+<p align="center">
+  <img src="assets/icons/playstore.png" height="60" alt="Peteks mini logo" />
+</p>
+
+🔹 How to use:
+
+Save the block above as README.md in your repo root.
+
+Replace placeholders (your-username, screenshot paths, etc.).
+
+Commit & push – GitHub will render it automatically.
+
+Enjoy your brand-new, pretty README!
