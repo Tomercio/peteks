@@ -31,7 +31,6 @@
 
 ## 🚀 Getting Started
 
-```bash
 # 1. clone
 git clone https://github.com/your-username/peteks.git
 cd peteks
