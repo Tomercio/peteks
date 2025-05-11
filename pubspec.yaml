@@ -17,7 +17,7 @@ dependencies:
   flutter_sound: ^9.2.13
   permission_handler: ^11.0.1
   pattern_lock: ^2.0.0
-  android_intent_plus: ^4.0.5
+  android_intent_plus: ^4.0.3
 
 
 
