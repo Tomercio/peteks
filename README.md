@@ -57,13 +57,13 @@ flutter run
 💡 Roadmap
  iOS Drive-backup via Sign in with Apple + iCloud Drive
 
- Tag system & fast search
+- Tag system & fast search
 
- Web companion app
+- Web companion app
 
- Multi-select & batch actions
+- Multi-select & batch actions
 
-Vote or open an issue with your ideas!
+- Vote or open an issue with your ideas!
 
 ---
 
