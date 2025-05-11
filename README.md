@@ -4,7 +4,7 @@
 -->
 
 <p align="center">
-  <img src="assets/branding/icon_round.png" height="120" alt="Peteks logo" />
+  <img src="assets/icons/playstore.png" height="120" alt="Peteks logo" />
 </p>
 
 <h1 align="center">Peteks</h1>
@@ -34,16 +34,6 @@
 | 🔒 **Secure notes** | Optional PIN-lock for sensitive notes (no data leaves your device). |
 | 📦 **100 % offline-first** | Works without internet; sync only when **you** ask. |
 
----
-
-## 📸 Screenshots
-
-<!-- Swap the placeholders with real screenshots -->
-<p align="center">
-  <img src="docs/screenshots/light_grid.png" width="30%" />
-  <img src="docs/screenshots/dark_editor.png"  width="30%" />
-  <img src="docs/screenshots/drive_backup.png" width="30%" />
-</p>
 
 ---
 
