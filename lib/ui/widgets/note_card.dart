@@ -120,154 +120,108 @@ class _NoteCardState extends State<NoteCard>
                   : BorderSide.none,
             ),
             margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Thumbnail if available
-                if (widget.note.thumbnailImage != null)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SizedBox(
-                        width: 70,
-                        height: 70,
-                        child: Image.file(
-                          File(widget.note.thumbnailImage!),
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey.shade300,
-                              child: const Icon(Icons.broken_image,
-                                  color: Colors.grey),
-                            );
-                          },
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top row: Title and Favorite
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (widget.note.isPinned)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 4.0),
+                          child: Icon(
+                            Icons.push_pin,
+                            size: 16,
+                            color: textColor,
+                          ),
+                        ),
+                      Expanded(
+                        child: Text(
+                          widget.note.title.isEmpty
+                              ? 'Untitled'
+                              : widget.note.title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                            fontFamily: 'Nunito',
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ),
-                  ),
-                // Main content
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 20, horizontal: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        // Top group: title and preview
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                if (widget.note.isPinned)
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 4.0),
-                                    child: Icon(
-                                      Icons.push_pin,
-                                      size: 16,
-                                      color: textColor,
-                                    ),
-                                  ),
-                                Expanded(
-                                  child: Text(
-                                    widget.note.title.isEmpty
-                                        ? 'Untitled'
-                                        : widget.note.title,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: textColor,
-                                      fontFamily: 'Nunito',
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (widget.onFavoriteToggle != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 8.0),
-                                    child: IconButton(
-                                      icon: Icon(
-                                        widget.note.isFavorite
-                                            ? Icons.favorite
-                                            : Icons.favorite_border,
-                                        color: heartColor,
-                                        size: 20,
-                                      ),
-                                      onPressed: widget.onFavoriteToggle,
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                      tooltip: 'Favorite',
-                                    ),
-                                  ),
-                              ],
+                      if (widget.onFavoriteToggle != null)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: IconButton(
+                            icon: Icon(
+                              widget.note.isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: heartColor,
+                              size: 20,
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _getNotePreview(widget.note.content),
+                            onPressed: widget.onFavoriteToggle,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            tooltip: 'Favorite',
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Preview with 3 dots if overflowing
+                  _buildPlainPreviewWithDots(widget.note.content, textColor,
+                      maxLines: 2),
+                  const SizedBox(height: 8),
+                  // Tags
+                  if (widget.note.tags.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4.0, top: 4.0),
+                      child: Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: widget.note.tags.map((tag) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: tagBgColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              tag,
                               style: TextStyle(
-                                fontSize: 13,
-                                color: textColor,
+                                fontSize: 12,
+                                color: tagTextColor,
+                                fontWeight: FontWeight.w600,
                                 fontFamily: 'Nunito',
                               ),
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        // Bottom group: date and tags
-                        Row(
-                          children: [
-                            Text(
-                              formattedDate,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: textColor,
-                                fontFamily: 'Nunito',
-                              ),
-                            ),
-                            if (widget.note.tags.isNotEmpty)
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 8.0),
-                                  child: Wrap(
-                                    spacing: 4,
-                                    runSpacing: 2,
-                                    children: widget.note.tags.map((tag) {
-                                      return Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: tagBgColor,
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                        child: Text(
-                                          tag,
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: tagTextColor,
-                                            fontWeight: FontWeight.w600,
-                                            fontFamily: 'Nunito',
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
+                          );
+                        }).toList(),
+                      ),
                     ),
+                  // Date at the bottom left
+                  Row(
+                    children: [
+                      Text(
+                        formattedDate,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: textColor,
+                          fontFamily: 'Nunito',
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -433,7 +387,8 @@ class _NoteCardState extends State<NoteCard>
     }
   }
 
-  Widget _buildPlainPreviewWithDots(String content, Color textColor) {
+  Widget _buildPlainPreviewWithDots(String content, Color textColor,
+      {int maxLines = 5}) {
     String plain = _getNotePreview(content);
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -447,7 +402,7 @@ class _NoteCardState extends State<NoteCard>
             text: plain.isEmpty ? 'No content' : plain,
             style: previewStyle,
           ),
-          maxLines: 5,
+          maxLines: maxLines,
           textDirection: ui.TextDirection.ltr,
         );
         tp.layout(maxWidth: constraints.maxWidth);
@@ -458,7 +413,7 @@ class _NoteCardState extends State<NoteCard>
             Text(
               plain.isEmpty ? 'No content' : plain,
               style: previewStyle,
-              maxLines: 5,
+              maxLines: maxLines,
               overflow: TextOverflow.ellipsis,
             ),
             if (isOverflowing)

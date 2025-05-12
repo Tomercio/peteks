@@ -863,6 +863,7 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                             _note = _note.copyWith(reminderDateTime: null);
                             _hasChanges = true;
                           });
+                          await _saveNote(); // Save the note after removing the reminder
                         },
                       ),
                     ),
@@ -1115,6 +1116,13 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
       pickedTime.hour,
       pickedTime.minute,
     );
+    // Check if the reminder is in the future
+    if (!reminderDateTime.isAfter(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a future date and time.')),
+      );
+      return;
+    }
     // Get notification service
     final notificationService =
         Provider.of<NotificationService>(context, listen: false);
