@@ -126,8 +126,8 @@ class GoogleDriveService {
           drive.File(),
           fileId!,
           uploadMedia: drive.Media(
-            Stream.value(markdownContent.codeUnits),
-            markdownContent.codeUnits.length,
+            Stream.value(utf8.encode(markdownContent)),
+            utf8.encode(markdownContent).length,
           ),
         );
       } else {
@@ -140,8 +140,8 @@ class GoogleDriveService {
         await _driveApi!.files.create(
           file,
           uploadMedia: drive.Media(
-            Stream.value(markdownContent.codeUnits),
-            markdownContent.codeUnits.length,
+            Stream.value(utf8.encode(markdownContent)),
+            utf8.encode(markdownContent).length,
           ),
         );
       }

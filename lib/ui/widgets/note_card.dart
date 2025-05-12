@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import '../../models/note.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import '../../theme/app_theme.dart';
 import 'dart:ui' as ui;
+import 'package:flutter_quill/flutter_quill.dart' as quill;
+
+// Add enum for card mode
+enum NoteCardMode { grid, list }
 
 class NoteCard extends StatefulWidget {
   final Note note;
   final VoidCallback onTap;
   final VoidCallback? onFavoriteToggle;
+  final NoteCardMode mode;
 
   const NoteCard({
     super.key,
     required this.note,
     required this.onTap,
     this.onFavoriteToggle,
+    this.mode = NoteCardMode.grid,
   });
 
   @override
@@ -83,6 +90,191 @@ class _NoteCardState extends State<NoteCard>
       tagTextColor = AppTheme.lightColors['primaryText']!;
     }
 
+    // List mode: horizontal card with thumbnail
+    if (widget.mode == NoteCardMode.list) {
+      return AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: child,
+          );
+        },
+        child: GestureDetector(
+          onTapDown: (_) => _animationController.forward(),
+          onTapUp: (_) {
+            _animationController.reverse();
+            widget.onTap();
+          },
+          onTapCancel: () => _animationController.reverse(),
+          child: Card(
+            color: cardColor,
+            elevation: widget.note.isPinned ? 8 : 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: widget.note.isPinned
+                  ? BorderSide(
+                      color: theme.colorScheme.primary,
+                      width: 2,
+                    )
+                  : BorderSide.none,
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Thumbnail if available
+                if (widget.note.thumbnailImage != null)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        width: 70,
+                        height: 70,
+                        child: Image.file(
+                          File(widget.note.thumbnailImage!),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey.shade300,
+                              child: const Icon(Icons.broken_image,
+                                  color: Colors.grey),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                // Main content
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 20, horizontal: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        // Top group: title and preview
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                if (widget.note.isPinned)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 4.0),
+                                    child: Icon(
+                                      Icons.push_pin,
+                                      size: 16,
+                                      color: textColor,
+                                    ),
+                                  ),
+                                Expanded(
+                                  child: Text(
+                                    widget.note.title.isEmpty
+                                        ? 'Untitled'
+                                        : widget.note.title,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: textColor,
+                                      fontFamily: 'Nunito',
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (widget.onFavoriteToggle != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: IconButton(
+                                      icon: Icon(
+                                        widget.note.isFavorite
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: heartColor,
+                                        size: 20,
+                                      ),
+                                      onPressed: widget.onFavoriteToggle,
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      tooltip: 'Favorite',
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _getNotePreview(widget.note.content),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: textColor,
+                                fontFamily: 'Nunito',
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Bottom group: date and tags
+                        Row(
+                          children: [
+                            Text(
+                              formattedDate,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: textColor,
+                                fontFamily: 'Nunito',
+                              ),
+                            ),
+                            if (widget.note.tags.isNotEmpty)
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: Wrap(
+                                    spacing: 4,
+                                    runSpacing: 2,
+                                    children: widget.note.tags.map((tag) {
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: tagBgColor,
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          tag,
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: tagTextColor,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Nunito',
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Default: grid mode (existing layout)
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
@@ -230,24 +422,19 @@ class _NoteCardState extends State<NoteCard>
     );
   }
 
-  Widget _buildPlainPreviewWithDots(String content, Color textColor) {
-    String plain = '';
-    if (content.isNotEmpty) {
-      try {
-        final dynamic decoded = jsonDecode(content);
-        if (decoded is List) {
-          plain = decoded
-              .map((op) => op['insert'])
-              .whereType<String>()
-              .join()
-              .trim();
-        } else {
-          plain = content.trim();
-        }
-      } catch (e) {
-        plain = content.trim();
-      }
+  String _getNotePreview(String content) {
+    if (content.isEmpty) return '';
+    try {
+      final doc = quill.Document.fromJson(jsonDecode(content));
+      return doc.toPlainText().trim();
+    } catch (e) {
+      // fallback for legacy/plain text notes
+      return content.trim();
     }
+  }
+
+  Widget _buildPlainPreviewWithDots(String content, Color textColor) {
+    String plain = _getNotePreview(content);
     return LayoutBuilder(
       builder: (context, constraints) {
         final previewStyle = TextStyle(

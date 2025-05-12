@@ -69,8 +69,7 @@ class ColorPickerSheet extends StatelessWidget {
             itemCount: colors.length,
             itemBuilder: (context, index) {
               final Color color = colors[index];
-              final bool isSelected = color.value ==
-                  initialColor.value; // Color.value is standard in Flutter
+              final bool isSelected = color == initialColor;
               final bool isDark = color.computeLuminance() < 0.5;
 
               return GestureDetector(

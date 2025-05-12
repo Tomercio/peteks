@@ -50,7 +50,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _buildSection(
               'Contact',
               'If you have any questions about this Privacy Policy, '
-                  'please contact us at support@peteks.app',
+                  'please contact us at info.peteks@gmail.com',
             ),
             const SizedBox(height: 32),
             const Center(

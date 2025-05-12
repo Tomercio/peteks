@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import '../widgets/note_card.dart';
-import '../widgets/note_list_item.dart';
 import '../../services/storage_service.dart';
 import '../../models/note.dart';
 import '../../main.dart';
@@ -29,8 +28,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   String? _selectedTag;
   bool _showOnlyFavorites = false;
 
-  // Default value for grid view
-  ViewMode _viewMode = ViewMode.grid;
+  // Add view mode state
+  ViewMode _viewMode = ViewMode.list;
 
   // Animation for tags
   late AnimationController _tagController;
@@ -71,9 +70,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _loadViewPreference() {
     final savedViewMode =
-        _storageService.getSetting('viewMode', defaultValue: 'grid');
+        _storageService.getSetting('viewMode', defaultValue: 'list');
     setState(() {
-      _viewMode = savedViewMode == 'list' ? ViewMode.list : ViewMode.grid;
+      _viewMode = savedViewMode == 'grid' ? ViewMode.grid : ViewMode.list;
     });
   }
 
@@ -154,26 +153,26 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ? 0
         : _notes.map((n) => n.position).reduce((a, b) => a > b ? a : b) + 1;
 
-    // Create a temporary note without saving it
+    // Create a new note and save it immediately
     final note = Note(
       title: '',
       content: '',
       position: maxPosition,
     );
+    await _storageService.saveNote(note);
 
     if (mounted) {
-      final result = await Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(
           settings: const RouteSettings(name: '/note'),
           builder: (context) => NoteScreen(note: note),
         ),
       );
-
-      // Only reload notes if we returned from the note screen
-      if (mounted && result == true) {
+      if (!mounted) return;
+      setState(() {
         _loadNotes();
-      }
+      });
     }
   }
 
@@ -192,12 +191,19 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         ),
         actions: [
-          // Toggle view mode
+          // View mode toggle (move before favorites)
           IconButton(
             icon: Icon(
                 _viewMode == ViewMode.grid ? Icons.view_list : Icons.grid_view),
             onPressed: _toggleViewMode,
-            tooltip: _viewMode == ViewMode.grid ? 'List View' : 'Grid View',
+            tooltip: _viewMode == ViewMode.grid ? 'List view' : 'Grid view',
+          ),
+          // Favorites filter
+          IconButton(
+            icon: Icon(
+                _showOnlyFavorites ? Icons.favorite : Icons.favorite_border),
+            onPressed: _toggleFavoritesFilter,
+            tooltip: 'Show favorites',
           ),
           // Search button
           IconButton(
@@ -212,22 +218,12 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               );
             },
           ),
-          // Favorites filter
-          IconButton(
-            icon: Icon(
-                _showOnlyFavorites ? Icons.favorite : Icons.favorite_border),
-            onPressed: _toggleFavoritesFilter,
-            tooltip: 'Show favorites',
-          ),
           // Settings with proper provider approach
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // Get ThemeService from the root of the app
               final themeService =
                   Provider.of<ThemeService>(context, listen: false);
-
-              // Create a new nested provider to ensure SettingsScreen has access to ThemeService
               Navigator.of(context).push(
                 MaterialPageRoute(
                   settings: const RouteSettings(name: '/settings'),
@@ -259,13 +255,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   )
-                : IndexedStack(
-                    index: _viewMode == ViewMode.grid ? 0 : 1,
-                    children: [
-                      _buildGridView(),
-                      _buildListView(),
-                    ],
-                  ),
+                : (_viewMode == ViewMode.list
+                    ? _buildListView()
+                    : _buildGridView()),
           ),
         ],
       ),
@@ -287,6 +279,148 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildListView() {
+    return ReorderableListView.builder(
+      key: const ValueKey('list_view'),
+      padding: const EdgeInsets.all(8),
+      itemCount: _filteredNotes.length,
+      proxyDecorator: (Widget child, int index, Animation<double> animation) {
+        return Material(
+          color: Colors.transparent,
+          elevation: 8,
+          borderRadius: BorderRadius.circular(20),
+          child: child,
+        );
+      },
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          if (oldIndex < newIndex) {
+            newIndex -= 1;
+          }
+          final note = _filteredNotes.removeAt(oldIndex);
+          _filteredNotes.insert(newIndex, note);
+          for (int i = 0; i < _filteredNotes.length; i++) {
+            final updatedNote = _filteredNotes[i].copyWith(position: i);
+            _storageService.saveNote(updatedNote);
+          }
+        });
+      },
+      itemBuilder: (context, index) {
+        final note = _filteredNotes[index];
+        return NoteCard(
+          key: ValueKey(note.id),
+          note: note,
+          onTap: () async {
+            bool unlocked = true;
+            if (note.isSecure) {
+              unlocked = false;
+              if (note.securityType == 'password') {
+                unlocked = await showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) {
+                        final TextEditingController pass =
+                            TextEditingController();
+                        return AlertDialog(
+                          title: const Text('Enter Password'),
+                          content: TextField(
+                            controller: pass,
+                            obscureText: true,
+                            decoration:
+                                const InputDecoration(labelText: 'Password'),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                final hash = sha256
+                                    .convert(utf8.encode(pass.text))
+                                    .toString();
+                                if (hash == note.securityHash) {
+                                  Navigator.of(context).pop(true);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text('Incorrect password')),
+                                  );
+                                }
+                              },
+                              child: const Text('Unlock'),
+                            ),
+                          ],
+                        );
+                      },
+                    ) ??
+                    false;
+              } else if (note.securityType == 'pattern') {
+                unlocked = await showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text('Enter Pattern'),
+                          content: SizedBox(
+                            width: 250,
+                            height: 300,
+                            child: PatternLock(
+                              selectedColor:
+                                  Theme.of(context).colorScheme.primary,
+                              notSelectedColor: Colors.grey,
+                              pointRadius: 10,
+                              showInput: true,
+                              dimension: 3,
+                              onInputComplete: (List<int> input) {
+                                final hash = sha256
+                                    .convert(utf8.encode(input.join('-')))
+                                    .toString();
+                                if (hash == note.securityHash) {
+                                  Navigator.of(context).pop(true);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text('Incorrect pattern')),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ) ??
+                    false;
+              }
+            }
+            if (!unlocked) return;
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                settings: const RouteSettings(name: '/note'),
+                builder: (context) => NoteScreen(note: note),
+              ),
+            );
+            if (!mounted) return;
+            setState(() {
+              _loadNotes();
+            });
+          },
+          onFavoriteToggle: () {
+            setState(() {
+              final updatedNote = note.copyWith(
+                isFavorite: !note.isFavorite,
+              );
+              _storageService.saveNote(updatedNote);
+              _loadNotes();
+            });
+          },
+          mode: NoteCardMode.list,
+        );
+      },
+    );
+  }
+
   Widget _buildGridView() {
     return ReorderableGridView.builder(
         key: const ValueKey('grid_view'),
@@ -300,16 +434,11 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         itemCount: _filteredNotes.length,
         onReorder: (oldIndex, newIndex) {
           setState(() {
-            // Handle case of dragging down
             if (oldIndex < newIndex) {
               newIndex -= 1;
             }
-
-            // Move note in array
             final note = _filteredNotes.removeAt(oldIndex);
             _filteredNotes.insert(newIndex, note);
-
-            // Update position in all notes
             for (int i = 0; i < _filteredNotes.length; i++) {
               final updatedNote = _filteredNotes[i].copyWith(position: i);
               _storageService.saveNote(updatedNote);
@@ -319,7 +448,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         itemBuilder: (context, index) {
           final note = _filteredNotes[index];
           return NoteCard(
-            key: ValueKey(note.id), // Important to provide unique key!
+            key: ValueKey(note.id),
             note: note,
             onTap: () async {
               bool unlocked = true;
@@ -373,7 +502,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         barrierDismissible: false,
                         builder: (context) {
                           return AlertDialog(
-                            title: const Text('Draw Pattern to Unlock'),
+                            title: const Text('Enter Pattern'),
                             content: SizedBox(
                               width: 250,
                               height: 300,
@@ -413,7 +542,10 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   builder: (context) => NoteScreen(note: note),
                 ),
               );
-              _loadNotes();
+              if (!mounted) return;
+              setState(() {
+                _loadNotes();
+              });
             },
             onFavoriteToggle: () {
               setState(() {
@@ -424,144 +556,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 _loadNotes();
               });
             },
+            mode: NoteCardMode.grid,
           );
         });
-  }
-
-  Widget _buildListView() {
-    return ReorderableListView.builder(
-      key: const ValueKey('list_view'),
-      padding: const EdgeInsets.all(8),
-      itemCount: _filteredNotes.length,
-      onReorder: (oldIndex, newIndex) {
-        setState(() {
-          // Handle case of dragging down
-          if (oldIndex < newIndex) {
-            newIndex -= 1;
-          }
-
-          // Move note in array
-          final note = _filteredNotes.removeAt(oldIndex);
-          _filteredNotes.insert(newIndex, note);
-
-          // Update position in all notes
-          for (int i = 0; i < _filteredNotes.length; i++) {
-            final updatedNote = _filteredNotes[i].copyWith(position: i);
-            _storageService.saveNote(updatedNote);
-          }
-        });
-      },
-      itemBuilder: (context, index) {
-        final note = _filteredNotes[index];
-        return NoteListItem(
-          key: ValueKey(note.id), // Important to provide unique key!
-          note: note,
-          onTap: () async {
-            bool unlocked = true;
-            if (note.isSecure) {
-              unlocked = false;
-              if (note.securityType == 'password') {
-                unlocked = await showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (context) {
-                        final TextEditingController pass =
-                            TextEditingController();
-                        return AlertDialog(
-                          title: const Text('Enter Password'),
-                          content: TextField(
-                            controller: pass,
-                            obscureText: true,
-                            decoration:
-                                const InputDecoration(labelText: 'Password'),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                final hash = sha256
-                                    .convert(utf8.encode(pass.text))
-                                    .toString();
-                                if (hash == note.securityHash) {
-                                  Navigator.of(context).pop(true);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Incorrect password')),
-                                  );
-                                }
-                              },
-                              child: const Text('Unlock'),
-                            ),
-                          ],
-                        );
-                      },
-                    ) ??
-                    false;
-              } else if (note.securityType == 'pattern') {
-                unlocked = await showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text('Draw Pattern to Unlock'),
-                          content: SizedBox(
-                            width: 250,
-                            height: 300,
-                            child: PatternLock(
-                              selectedColor:
-                                  Theme.of(context).colorScheme.primary,
-                              notSelectedColor: Colors.grey,
-                              pointRadius: 10,
-                              showInput: true,
-                              dimension: 3,
-                              onInputComplete: (List<int> input) {
-                                final hash = sha256
-                                    .convert(utf8.encode(input.join('-')))
-                                    .toString();
-                                if (hash == note.securityHash) {
-                                  Navigator.of(context).pop(true);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Incorrect pattern')),
-                                  );
-                                }
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ) ??
-                    false;
-              }
-            }
-            if (!unlocked) return;
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                settings: const RouteSettings(name: '/note'),
-                builder: (context) => NoteScreen(note: note),
-              ),
-            );
-            if (!mounted) return;
-            _loadNotes();
-          },
-          onFavoriteToggle: () {
-            setState(() {
-              final updatedNote = note.copyWith(
-                isFavorite: !note.isFavorite,
-              );
-              _storageService.saveNote(updatedNote);
-              _loadNotes();
-            });
-          },
-        );
-      },
-    );
   }
 
   Widget _buildTagsBar() {

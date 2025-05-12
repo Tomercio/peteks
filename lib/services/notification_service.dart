@@ -101,51 +101,13 @@ class NotificationService {
     if (note.reminderDateTime == null) return;
 
     final id = note.id.hashCode;
-    final scheduledDate = tz.TZDateTime.from(note.reminderDateTime!, tz.local);
+    final scheduled = tz.TZDateTime.from(note.reminderDateTime!, tz.local);
 
-    bool canSchedule = true;
-    // Only check on Android
-    if (Theme.of(MyApp.navigatorKey.currentContext!).platform ==
-        TargetPlatform.android) {
-      canSchedule = await ensureExactAlarmPermission();
-    }
-
-    if (!canSchedule) {
-      if (context != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Please allow "Exact alarms" and try again.')),
-        );
-      }
-      // Fallback: schedule non-exact notification
-      await _flutterLocalNotificationsPlugin.zonedSchedule(
-        id,
-        'Note Reminder',
-        note.title.isNotEmpty ? note.title : 'Reminder',
-        scheduledDate,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'note_reminder_channel',
-            'Note Reminders',
-            channelDescription: 'Reminders for your notes',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-          iOS: DarwinNotificationDetails(),
-        ),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.time,
-        payload: note.id,
-      );
-      return;
-    }
-
-    // Normal exact schedule
     await _flutterLocalNotificationsPlugin.zonedSchedule(
       id,
       'Note Reminder',
       note.title.isNotEmpty ? note.title : 'Reminder',
-      scheduledDate,
+      scheduled,
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'note_reminder_channel',
@@ -157,7 +119,6 @@ class NotificationService {
         iOS: DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time,
       payload: note.id,
     );
   }

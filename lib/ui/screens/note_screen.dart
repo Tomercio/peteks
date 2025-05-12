@@ -141,11 +141,6 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _storageService = Provider.of<StorageService>(context, listen: false);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_note.isSecure) {
-        _promptForSecurity();
-      }
-    });
   }
 
   @override
@@ -178,9 +173,7 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
         _storageService.getSetting('autoSave', defaultValue: false) == true;
     if (shouldAutoSave) {
       await _saveNote(showSnackbar: false);
-      if (!mounted) return false;
-      Navigator.of(context).pop(true); // Return true to indicate note was saved
-      return false;
+      return true; // Let WillPopScope handle the pop
     }
 
     // Show confirmation dialog
@@ -202,7 +195,7 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
           TextButton(
             onPressed: () async {
               await _saveNote();
-              if (!mounted) return null;
+              if (!mounted) return;
               Navigator.of(context).pop(true);
             },
             child: const Text('SAVE'),
@@ -213,8 +206,7 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
 
     if (result == true) {
       if (!mounted) return false;
-      Navigator.of(context).pop(true); // Return true to indicate note was saved
-      return false;
+      return true; // Let WillPopScope handle the pop
     }
     return result ?? false;
   }
@@ -557,10 +549,16 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
         ? Colors.grey[800]
         : Colors.grey[300];
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (!didPop) {
+          final shouldPop = await _onWillPop();
+          if (shouldPop && context.mounted) Navigator.of(context).pop();
+        }
+      },
       child: Scaffold(
-        backgroundColor: theme.colorScheme.background,
+        backgroundColor: theme.colorScheme.surface,
         appBar: AppBar(
           backgroundColor: theme.appBarTheme.backgroundColor,
           elevation: 0,
@@ -779,233 +777,233 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
           ],
         ),
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Image display if available
-                if (_imagePaths.isNotEmpty) _buildImagePreview(),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Image display if available
+                  if (_imagePaths.isNotEmpty) _buildImagePreview(),
 
-                // Audio player if available
-                if (_note.audioPath != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
-                    child: _buildAudioPlayer(_note.audioPath!),
-                  ),
+                  // Audio player if available
+                  if (_note.audioPath != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: _buildAudioPlayer(_note.audioPath!),
+                    ),
 
-                // Title
-                TextField(
-                  controller: _titleController,
-                  maxLines: null,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: titleTextColor,
-                    fontFamily: 'Nunito',
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Title',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: borderColor!,
-                        width: 2,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: borderColor,
-                        width: 2,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: borderColor,
-                        width: 2.5,
-                      ),
-                    ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    hintStyle: TextStyle(
-                      color: titleTextColor.withAlpha((0.6 * 255).toInt()),
-                      fontFamily: 'Nunito',
-                    ),
-                    filled: false,
-                  ),
-                ),
-
-                // Reminder chip
-                if (_note.reminderDateTime != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: InputChip(
-                      avatar: Icon(Icons.notifications_active,
-                          size: 18, color: appBarIconColor),
-                      label: Text(
-                        'Remind: '
-                        '${_note.reminderDateTime!.toLocal().toString().substring(0, 16)}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: titleTextColor,
-                          fontFamily: 'Nunito',
-                        ),
-                      ),
-                      onDeleted: () async {
-                        // Cancel the reminder
-                        final notificationService =
-                            Provider.of<NotificationService>(context,
-                                listen: false);
-                        await notificationService.cancelNoteReminder(_note);
-
-                        setState(() {
-                          _note = _note.copyWith(reminderDateTime: null);
-                          _hasChanges = true;
-                        });
-                      },
-                    ),
-                  ),
-
-                // Date
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(
-                    'Edited ${_note.modifiedAt.toString().substring(0, 16)}',
+                  // Title
+                  TextField(
+                    controller: _titleController,
+                    maxLines: null,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
                       color: titleTextColor,
                       fontFamily: 'Nunito',
                     ),
+                    decoration: InputDecoration(
+                      hintText: 'Title',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: borderColor!,
+                          width: 2,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: borderColor,
+                          width: 2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: borderColor,
+                          width: 2.5,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      hintStyle: TextStyle(
+                        color: titleTextColor.withAlpha((0.6 * 255).toInt()),
+                        fontFamily: 'Nunito',
+                      ),
+                      filled: false,
+                    ),
                   ),
-                ),
 
-                // Tags
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Wrap(
-                    spacing: 8.0,
-                    runSpacing: 4.0,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      // Add Tag Button (icon only, peach color, rounded)
-                      GestureDetector(
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => _buildAddTagDialog(),
-                          );
+                  // Reminder chip
+                  if (_note.reminderDateTime != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: InputChip(
+                        avatar: Icon(Icons.notifications_active,
+                            size: 18, color: appBarIconColor),
+                        label: Text(
+                          'Remind: '
+                          '${_note.reminderDateTime!.toLocal().toString().substring(0, 16)}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: titleTextColor,
+                            fontFamily: 'Nunito',
+                          ),
+                        ),
+                        onDeleted: () async {
+                          // Cancel the reminder
+                          final notificationService =
+                              Provider.of<NotificationService>(context,
+                                  listen: false);
+                          await notificationService.cancelNoteReminder(_note);
+
+                          setState(() {
+                            _note = _note.copyWith(reminderDateTime: null);
+                            _hasChanges = true;
+                          });
                         },
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black,
-                                blurRadius: 2,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child:
-                              Icon(Icons.label, size: 18, color: Colors.white),
-                        ),
                       ),
-                      // All tags
-                      ..._tags.map((tag) {
-                        final isNewTag = _tagAdded && tag == _tags.last;
-                        final chip = Chip(
-                          label: Text(
-                            tag,
-                            style: TextStyle(
-                              color: titleTextColor,
-                              fontFamily: 'Nunito',
-                            ),
-                          ),
-                          backgroundColor: theme.colorScheme.secondary,
-                          deleteIcon: Icon(
-                            Icons.close,
-                            size: 18,
-                            color:
-                                titleTextColor.withAlpha((0.7 * 255).toInt()),
-                          ),
-                          onDeleted: () {
-                            setState(() {
-                              _tags.remove(tag);
-                              _hasChanges = true;
-                            });
-                          },
-                        );
-                        if (isNewTag) {
-                          return ScaleTransition(
-                            scale: _tagAnimation,
-                            child: chip,
-                          );
-                        }
-                        return chip;
-                      }),
-                    ],
-                  ),
-                ),
+                    ),
 
-                // Quill toolbar and RTL toggle in a row
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black,
-                        blurRadius: 2,
-                        offset: const Offset(0, 1),
+                  // Date
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'Edited ${_note.modifiedAt.toString().substring(0, 16)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: titleTextColor,
+                        fontFamily: 'Nunito',
                       ),
-                    ],
+                    ),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
+
+                  // Tags
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Wrap(
+                      spacing: 8.0,
+                      runSpacing: 4.0,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        quill.QuillSimpleToolbar(
-                          controller: _quillController,
-                          config: quill.QuillSimpleToolbarConfig(
-                            showSubscript: false,
-                            showSuperscript: false,
-                            showIndent: false,
-                            showDirection: false,
-                            showFontFamily: false,
-                            showAlignmentButtons: true,
+                        // Add Tag Button (icon only, peach color, rounded)
+                        GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => _buildAddTagDialog(),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black,
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: Icon(Icons.label,
+                                size: 18, color: Colors.white),
                           ),
                         ),
+                        // All tags
+                        ..._tags.map((tag) {
+                          final isNewTag = _tagAdded && tag == _tags.last;
+                          final chip = Chip(
+                            label: Text(
+                              tag,
+                              style: TextStyle(
+                                color: titleTextColor,
+                                fontFamily: 'Nunito',
+                              ),
+                            ),
+                            backgroundColor: theme.colorScheme.secondary,
+                            deleteIcon: Icon(
+                              Icons.close,
+                              size: 18,
+                              color:
+                                  titleTextColor.withAlpha((0.7 * 255).toInt()),
+                            ),
+                            onDeleted: () {
+                              setState(() {
+                                _tags.remove(tag);
+                                _hasChanges = true;
+                              });
+                            },
+                          );
+                          if (isNewTag) {
+                            return ScaleTransition(
+                              scale: _tagAnimation,
+                              child: chip,
+                            );
+                          }
+                          return chip;
+                        }),
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
 
-                // Editor area with loading state
-                Expanded(
-                  child: Stack(
-                    children: [
-                      // Editor
-                      FadeTransition(
-                        opacity: _contentAnimation,
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: borderColor,
+                  // Quill toolbar and RTL toggle in a row
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black,
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          quill.QuillSimpleToolbar(
+                            controller: _quillController,
+                            config: quill.QuillSimpleToolbarConfig(
+                              showSubscript: false,
+                              showSuperscript: false,
+                              showIndent: false,
+                              showDirection: false,
+                              showFontFamily: false,
+                              showAlignmentButtons: true,
                             ),
                           ),
-                          constraints: BoxConstraints(
-                            minHeight: MediaQuery.of(context).size.height * 0.4,
-                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Editor area with loading state
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: borderColor,
+                      ),
+                    ),
+                    constraints: BoxConstraints(
+                      minHeight: MediaQuery.of(context).size.height * 0.6,
+                    ),
+                    child: Stack(
+                      children: [
+                        // Editor
+                        FadeTransition(
+                          opacity: _contentAnimation,
                           child: Directionality(
                             textDirection: _textDirection,
                             child: quill.QuillEditor(
@@ -1014,27 +1012,28 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                               focusNode: _editorFocusNode,
                               config: quill.QuillEditorConfig(
                                 placeholder: 'Write your note...',
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(16),
                                 autoFocus: false,
-                                expands: true,
+                                expands: false,
                                 scrollable: true,
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      // Loading indicator overlay
-                      if (!_isContentLoaded)
-                        Container(
-                          color: theme.colorScheme.background.withOpacity(0.7),
-                          child: const Center(
-                            child: CircularProgressIndicator(),
+                        // Loading indicator overlay
+                        if (!_isContentLoaded)
+                          Container(
+                            color: theme.colorScheme.surface
+                                .withAlpha((0.7 * 255).toInt()),
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -1282,7 +1281,7 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
           children: [
             ElevatedButton.icon(
               icon: const Icon(Icons.pattern),
-              label: const Text('Set Pattern'),
+              label: const Text('Create Pattern'),
               onPressed: () {
                 Navigator.of(context).pop();
                 _showPatternSetupDialog();
@@ -1299,7 +1298,7 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Draw Pattern'),
+        title: const Text('Create Pattern'),
         content: SizedBox(
           width: 250,
           height: 300,
@@ -1365,40 +1364,6 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
         ),
       ),
     );
-  }
-
-  void _promptForSecurity() {
-    if (_note.securityType == 'pattern') {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Text('Draw Pattern to Unlock'),
-          content: SizedBox(
-            width: 250,
-            height: 300,
-            child: PatternLock(
-              selectedColor: Theme.of(context).colorScheme.primary,
-              notSelectedColor: Colors.grey,
-              pointRadius: 10,
-              showInput: true,
-              dimension: 3,
-              onInputComplete: (List<int> input) {
-                final hash =
-                    sha256.convert(utf8.encode(input.join('-'))).toString();
-                if (hash == _note.securityHash) {
-                  Navigator.of(context).pop();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Incorrect pattern')),
-                  );
-                }
-              },
-            ),
-          ),
-        ),
-      );
-    }
   }
 
   // Build the image preview widget
