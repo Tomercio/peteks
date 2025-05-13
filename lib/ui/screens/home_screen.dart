@@ -508,12 +508,22 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       },
       itemCount: _filteredNotes.length > 9 ? 9 : _filteredNotes.length,
       onReorder: (oldIndex, newIndex) {
+        if (oldIndex == newIndex) return;
+
         setState(() {
-          if (oldIndex < newIndex) {
-            newIndex -= 1;
-          }
-          final note = _filteredNotes.removeAt(oldIndex);
-          _filteredNotes.insert(newIndex, note);
+          // Create a copy of the list
+          final List<Note> newList = List.from(_filteredNotes);
+
+          // Remove the item from the old position
+          final Note item = newList.removeAt(oldIndex);
+
+          // Insert the item at the new position
+          newList.insert(newIndex, item);
+
+          // Update the filtered notes
+          _filteredNotes = newList;
+
+          // Update positions for all notes
           for (int i = 0; i < _filteredNotes.length; i++) {
             final updatedNote = _filteredNotes[i].copyWith(position: i);
             _storageService.saveNote(updatedNote);
