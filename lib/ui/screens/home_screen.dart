@@ -212,7 +212,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         greeting = 'Good night, $nickname! 😴';
       } else if (hour < 12) {
         greeting = 'Good morning, $nickname! 🌞';
-      } else if (hour < 18) {
+      } else if (hour < 16) {
         greeting = 'Good afternoon, $nickname! 🌞';
       } else {
         greeting = 'Good evening, $nickname! 🌙';
@@ -664,10 +664,23 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     _selectTag(null);
                   }
                 },
-                avatar: _selectedTag == null
-                    ? const Icon(Icons.check, size: 18, color: Colors.green)
-                    : Icon(Icons.label_outline,
-                        color: Theme.of(context).colorScheme.primary),
+                avatar: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Icon(
+                      Icons.label_outline,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 20,
+                    ),
+                    if (_selectedTag == null)
+                      Icon(
+                        Icons.check,
+                        color: Theme.of(context).iconTheme.color,
+                        size: 14,
+                      ),
+                  ],
+                ),
+                showCheckmark: false,
                 labelStyle: Theme.of(context).chipTheme.labelStyle,
                 backgroundColor: Theme.of(context).chipTheme.backgroundColor,
                 elevation: 2,
