@@ -44,8 +44,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _promptForNicknameIfNeeded() async {
     final storageService = Provider.of<StorageService>(context, listen: false);
-    final nickname = storageService.getNickname();
-    if (nickname == null || nickname.trim().isEmpty) {
+    final hasSetNickname =
+        storageService.getSetting('hasSetNickname', defaultValue: false);
+
+    if (!hasSetNickname) {
       final controller = TextEditingController();
       await showDialog(
         context: context,
@@ -62,9 +64,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: () {
                 if (controller.text.trim().isNotEmpty) {
                   storageService.setNickname(controller.text.trim());
-                  _nicknameChanged = true; // Mark as changed
-                  Navigator.of(context).pop(); // Only close dialog
-                  setState(() {}); // Optionally update settings UI
+                  storageService.saveSetting('hasSetNickname', true);
+                  _nicknameChanged = true;
+                  Navigator.of(context).pop();
+                  setState(() {});
                 }
               },
               child: const Text('OK'),
