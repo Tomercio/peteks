@@ -3,7 +3,6 @@ import '../../models/note.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import '../../theme/app_theme.dart';
-import 'dart:ui' as ui;
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 // Add enum for card mode
@@ -357,6 +356,142 @@ class _NoteCardState extends State<NoteCard>
                             maxLines: 2,
                           ),
                         ),
+                        const Spacer(), // This will push the tags and date to the bottom
+                        // Tags in grid mode
+                        if (widget.note.tags.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                bottom: 4.0, left: 2.0, right: 2.0),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final tags = widget.note.tags;
+                                final tagWidgets = tags.map((tag) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: tagBgColor,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      tag,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: tagTextColor,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Nunito',
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList();
+
+                                // Helper to measure tag width
+                                double measureTagWidth(String tag) {
+                                  final textPainter = TextPainter(
+                                    text: TextSpan(
+                                      text: tag,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Nunito',
+                                      ),
+                                    ),
+                                    textDirection: Directionality.of(context),
+                                  );
+                                  textPainter.layout();
+                                  return textPainter.width +
+                                      12; // 12 for padding
+                                }
+
+                                // Measure '...' width
+                                final dotsWidth = measureTagWidth('...');
+
+                                // Calculate which tags fit in 2 lines
+                                List<Widget> displayTags = [];
+                                double lineWidth = 0;
+                                int line = 1;
+                                int lastTagOnSecondLine = -1;
+                                for (int i = 0; i < tags.length; i++) {
+                                  final tagWidth = measureTagWidth(tags[i]);
+                                  if (lineWidth + tagWidth >
+                                      constraints.maxWidth) {
+                                    line++;
+                                    if (line > 2) break;
+                                    lineWidth = 0;
+                                  }
+                                  // If this is the second line and adding this tag + dots would overflow, add dots and break
+                                  if (line == 2 &&
+                                      (lineWidth + tagWidth + dotsWidth >
+                                          constraints.maxWidth)) {
+                                    // If nothing fits after the break, replace the last tag with dots
+                                    if (displayTags.isNotEmpty) {
+                                      displayTags.removeLast();
+                                    }
+                                    displayTags.add(Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: tagBgColor,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        '...',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: tagTextColor,
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: 'Nunito',
+                                        ),
+                                      ),
+                                    ));
+                                    break;
+                                  }
+                                  displayTags.add(tagWidgets[i]);
+                                  lineWidth += tagWidth + 4; // 4 is spacing
+                                  if (line == 2)
+                                    lastTagOnSecondLine =
+                                        displayTags.length - 1;
+                                }
+
+                                // If we broke out of the loop because of too many tags, ensure dots are at the end of the second line
+                                if (displayTags.length < tags.length) {
+                                  // Remove the last tag on the second line and add dots
+                                  if (lastTagOnSecondLine >= 0 &&
+                                      lastTagOnSecondLine <
+                                          displayTags.length) {
+                                    displayTags.removeAt(lastTagOnSecondLine);
+                                    displayTags.add(Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: tagBgColor,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        '...',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: tagTextColor,
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: 'Nunito',
+                                        ),
+                                      ),
+                                    ));
+                                  }
+                                }
+
+                                return Wrap(
+                                  spacing: 4,
+                                  runSpacing: 4,
+                                  alignment: WrapAlignment.start,
+                                  crossAxisAlignment: WrapCrossAlignment.start,
+                                  children: displayTags,
+                                );
+                              },
+                            ),
+                          ),
                         // Bottom row: date and heart icon, flush with card bottom
                         Padding(
                           padding: const EdgeInsets.only(
@@ -425,7 +560,7 @@ class _NoteCardState extends State<NoteCard>
             style: previewStyle,
           ),
           maxLines: maxLines,
-          textDirection: ui.TextDirection.ltr,
+          textDirection: Directionality.of(context),
         );
         tp.layout(maxWidth: constraints.maxWidth);
         final bool isOverflowing = tp.didExceedMaxLines;

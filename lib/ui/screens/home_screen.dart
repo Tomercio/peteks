@@ -203,7 +203,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     String? greeting;
     if (nickname != null && nickname.trim().isNotEmpty) {
       final hour = DateTime.now().hour;
-      if (hour < 5) {
+      if (hour < 5 || hour >= 22) {
         greeting = 'Good night, $nickname! 😴';
       } else if (hour < 12) {
         greeting = 'Good morning, $nickname! 🌞';
