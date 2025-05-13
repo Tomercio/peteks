@@ -35,6 +35,11 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _tagController;
   late Animation<double> _tagAnimation;
 
+  // Animation for greeting pop
+  late AnimationController _greetingController;
+  late Animation<double> _greetingFade;
+  late Animation<Offset> _greetingSlide;
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +54,23 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       curve: Curves.easeInOut,
     );
 
+    // Greeting welcoming animation
+    _greetingController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _greetingFade = CurvedAnimation(
+      parent: _greetingController,
+      curve: Curves.easeInOut,
+    );
+    _greetingSlide = Tween<Offset>(
+      begin: const Offset(0, 0.18),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _greetingController,
+      curve: Curves.easeOutCubic,
+    ));
+
     // Load view preference from settings
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadViewPreference();
@@ -58,6 +80,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _tagController.dispose();
+    _greetingController.dispose();
     super.dispose();
   }
 
@@ -66,6 +89,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.didChangeDependencies();
     _storageService = Provider.of<StorageService>(context);
     _loadNotes();
+    // Trigger greeting animation when entering the screen
+    _greetingController.forward(from: 0);
   }
 
   void _loadViewPreference() {
@@ -184,38 +209,20 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (nickname != null && nickname.trim().isNotEmpty) {
       final hour = DateTime.now().hour;
       if (hour < 5) {
-        greeting = 'Good night, $nickname ! 😴';
+        greeting = 'Good night, $nickname! 😴';
       } else if (hour < 12) {
-        greeting = 'Good morning, $nickname ! 🌞';
+        greeting = 'Good morning, $nickname! 🌞';
       } else if (hour < 18) {
-        greeting = 'Good afternoon, $nickname ! 🌞';
+        greeting = 'Good afternoon, $nickname! 🌞';
       } else {
-        greeting = 'Good evening, $nickname ! 🌙';
+        greeting = 'Good evening, $nickname! 🌙';
       }
     }
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/peteks.png',
-              height: 80,
-            ),
-            if (greeting != null) ...[
-              const SizedBox(width: 16),
-              Text(
-                greeting,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontSize: 14,
-                      color: Theme.of(context).colorScheme.primary,
-                      fontFamily: 'Nunito',
-                    ),
-              ),
-            ],
-          ],
+        title: Image.asset(
+          'assets/peteks.png',
+          height: 80,
         ),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -278,6 +285,31 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       // Tags bar
       body: Column(
         children: [
+          if (greeting != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 16, left: 20, bottom: 8),
+                child: FadeTransition(
+                  opacity: _greetingFade,
+                  child: SlideTransition(
+                    position: _greetingSlide,
+                    child: Text(
+                      greeting,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).brightness == Brightness.light
+                            ? const Color(0xFF7C6F62)
+                            : const Color(0xFFF4ECD9),
+                        fontFamily: 'Nunito',
+                      ),
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           if (_notes.isNotEmpty) _buildTagsBar(),
 
           // Notes display - Grid or List
