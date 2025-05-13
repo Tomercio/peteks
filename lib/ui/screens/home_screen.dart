@@ -74,6 +74,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     // Load view preference from settings
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadViewPreference();
+      _tagController.forward();
     });
   }
 
@@ -151,10 +152,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         // If position is the same (or not defined), sort by modification date
         return b.modifiedAt.compareTo(a.modifiedAt);
       });
-
-      // Tag animation when filtering
-      _tagController.reset();
-      _tagController.forward();
     });
   }
 
@@ -169,6 +166,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() {
       _selectedTag = tag;
       _applyFilters();
+      _tagController.reset();
+      _tagController.forward();
     });
   }
 
@@ -507,7 +506,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           child: child,
         );
       },
-      itemCount: _filteredNotes.length,
+      itemCount: _filteredNotes.length > 9 ? 9 : _filteredNotes.length,
       onReorder: (oldIndex, newIndex) {
         setState(() {
           if (oldIndex < newIndex) {

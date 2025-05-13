@@ -315,7 +315,7 @@ class _NoteCardState extends State<NoteCard>
                                   ? Icons.favorite
                                   : Icons.favorite_border,
                               color: heartColor,
-                              size: widget.mode == NoteCardMode.grid ? 16 : 20,
+                              size: widget.mode == NoteCardMode.grid ? 18 : 20,
                             ),
                             onPressed: widget.onFavoriteToggle,
                             padding: EdgeInsets.zero,
