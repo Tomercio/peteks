@@ -5,6 +5,7 @@ import 'ui/screens/splash_screen.dart';
 import 'ui/screens/settings_screen.dart';
 import 'ui/screens/privacy_policy_screen.dart';
 import 'ui/screens/terms_screen.dart';
+import 'ui/screens/about_screen.dart';
 import 'services/storage_service.dart';
 import 'services/image_service.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -213,6 +214,7 @@ class _MyAppState extends State<MyApp> {
                   '/settings': (context) => const SettingsScreen(),
                   '/privacy': (context) => const PrivacyPolicyScreen(),
                   '/terms': (context) => const TermsScreen(),
+                  '/about': (context) => const AboutScreen(),
                 },
                 localizationsDelegates: const [
                   GlobalMaterialLocalizations.delegate,

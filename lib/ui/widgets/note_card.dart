@@ -106,148 +106,175 @@ class _NoteCardState extends State<NoteCard>
             widget.onTap();
           },
           onTapCancel: () => _animationController.reverse(),
-          child: Stack(
-            children: [
-              Card(
-                color: cardColor,
-                elevation: widget.note.isPinned ? 8 : 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: widget.note.isPinned
-                      ? BorderSide(
-                          color: theme.colorScheme.primary,
-                          width: 2,
-                        )
-                      : BorderSide.none,
-                ),
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                child: Stack(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Top row: Title and Favorite
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              if (widget.note.isPinned)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 4.0),
-                                  child: Icon(
-                                    Icons.push_pin,
-                                    size: 16,
-                                    color: textColor,
-                                  ),
-                                ),
-                              Expanded(
-                                child: Text(
-                                  widget.note.title.isEmpty
-                                      ? 'Untitled'
-                                      : widget.note.title,
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: textColor,
-                                    fontFamily: 'Nunito',
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (widget.onFavoriteToggle != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 8.0),
-                                  child: IconButton(
-                                    icon: Icon(
-                                      widget.note.isFavorite
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
-                                      color: heartColor,
-                                      size: 20,
-                                    ),
-                                    onPressed: widget.onFavoriteToggle,
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    tooltip: 'Favorite',
-                                  ),
-                                ),
-                            ],
+          child: Card(
+            color: cardColor,
+            elevation: widget.note.isPinned ? 8 : 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: widget.note.isPinned
+                  ? BorderSide(
+                      color: theme.colorScheme.primary,
+                      width: 2,
+                    )
+                  : BorderSide.none,
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: widget.note.isSecure
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.note.title.isEmpty
+                              ? 'Untitled'
+                              : widget.note.title,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                            fontFamily: 'Nunito',
                           ),
-                          const SizedBox(height: 8),
-                          // Ultra thin blurry divider for both modes
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(1),
-                            child: BackdropFilter(
-                              filter: ui.ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                              child: Container(
-                                height: 1,
-                                width: double.infinity,
-                                color: Colors.white.withAlpha(10),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(Icons.lock,
+                                size: 18, color: theme.colorScheme.primary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Secured Note',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: textColor.withAlpha((0.7 * 255).toInt()),
+                                fontFamily: 'Nunito',
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          // Preview with 3 dots if overflowing
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 4.0),
-                            child: _buildPlainPreviewWithDots(
-                                widget.note.content, textColor,
-                                maxLines: 2),
-                          ),
-                          const SizedBox(height: 8),
-                          // Date and Tags Row (List Mode)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Date
-                              Text(
-                                formattedDate,
+                          ],
+                        ),
+                        // No content/preview for secure notes
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Top row: Title and Favorite
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            if (widget.note.isPinned)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 4.0),
+                                child: Icon(
+                                  Icons.push_pin,
+                                  size: 16,
+                                  color: textColor,
+                                ),
+                              ),
+                            Expanded(
+                              child: Text(
+                                widget.note.title.isEmpty
+                                    ? 'Untitled'
+                                    : widget.note.title,
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
                                   color: textColor,
                                   fontFamily: 'Nunito',
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              if (widget.note.tags.isNotEmpty) ...[
-                                const SizedBox(width: 8),
-                                Wrap(
-                                  spacing: 4,
-                                  runSpacing: 4,
-                                  children: widget.note.tags.map((tag) {
-                                    return Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: tagBgColor,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        tag,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: tagTextColor,
-                                          fontWeight: FontWeight.w600,
-                                          fontFamily: 'Nunito',
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    );
-                                  }).toList(),
+                            ),
+                            if (widget.onFavoriteToggle != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: IconButton(
+                                  icon: Icon(
+                                    widget.note.isFavorite
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: heartColor,
+                                    size: 20,
+                                  ),
+                                  onPressed: widget.onFavoriteToggle,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  tooltip: 'Favorite',
                                 ),
-                              ]
-                            ],
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Ultra thin blurry divider for both modes
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(1),
+                          child: BackdropFilter(
+                            filter: ui.ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                            child: Container(
+                              height: 1,
+                              width: double.infinity,
+                              color: Colors.white.withAlpha(10),
+                            ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Preview with 3 dots if overflowing
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: _buildPlainPreviewWithDots(
+                              widget.note.content, textColor,
+                              maxLines: 2),
+                        ),
+                        const SizedBox(height: 8),
+                        // Date and Tags Row (List Mode)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Date
+                            Text(
+                              formattedDate,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: textColor,
+                                fontFamily: 'Nunito',
+                              ),
+                            ),
+                            if (widget.note.tags.isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              Wrap(
+                                spacing: 4,
+                                runSpacing: 4,
+                                children: widget.note.tags.map((tag) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: tagBgColor,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      tag,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: tagTextColor,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Nunito',
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ]
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       );
@@ -271,134 +298,98 @@ class _NoteCardState extends State<NoteCard>
         onTapCancel: () => _animationController.reverse(),
         child: SizedBox(
           height: 100, // Much smaller height for 3x3 grid
-          child: Stack(
-            children: [
-              Card(
-                color: cardColor,
-                elevation: widget.note.isPinned ? 8 : 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: widget.note.isPinned
-                      ? BorderSide(
-                          color: theme.colorScheme.primary,
-                          width: 1,
-                        )
-                      : BorderSide.none,
-                ),
-                margin: const EdgeInsets.all(4),
-                child: Stack(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Top content: title, icons, preview
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              if (widget.note.isPinned)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 1.0),
-                                  child: Icon(
-                                    Icons.push_pin,
-                                    size: widget.mode == NoteCardMode.grid
-                                        ? 12
-                                        : 16,
-                                    color: textColor,
-                                  ),
-                                ),
-                              Expanded(
-                                child: Text(
-                                  widget.note.title.isEmpty
-                                      ? 'Untitled'
-                                      : widget.note.title,
-                                  style: TextStyle(
-                                    fontSize: widget.mode == NoteCardMode.grid
-                                        ? 18
-                                        : 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: textColor,
-                                    fontFamily: 'Nunito',
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (widget.onFavoriteToggle != null)
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                      left: widget.mode == NoteCardMode.grid
-                                          ? 2.0
-                                          : 8.0),
-                                  child: IconButton(
-                                    icon: Icon(
-                                      widget.note.isFavorite
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
-                                      color: heartColor,
-                                      size: widget.mode == NoteCardMode.grid
-                                          ? 18
-                                          : 20,
-                                    ),
-                                    onPressed: widget.onFavoriteToggle,
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    tooltip: 'Favorite',
-                                  ),
-                                ),
-                            ],
+          child: Card(
+            color: cardColor,
+            elevation: widget.note.isPinned ? 8 : 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: widget.note.isPinned
+                  ? BorderSide(
+                      color: theme.colorScheme.primary,
+                      width: 1,
+                    )
+                  : BorderSide.none,
+            ),
+            margin: const EdgeInsets.all(4),
+            child: Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: widget.note.isSecure
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.note.title.isEmpty
+                              ? 'Untitled'
+                              : widget.note.title,
+                          style: TextStyle(
+                            fontSize:
+                                widget.mode == NoteCardMode.grid ? 18 : 22,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                            fontFamily: 'Nunito',
                           ),
-                          const SizedBox(height: 4),
-                          // Centered, short blurry divider for both modes (60% width)
-                          Align(
-                            alignment: Alignment.center,
-                            child: FractionallySizedBox(
-                              widthFactor: 0.8,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(1),
-                                child: BackdropFilter(
-                                  filter:
-                                      ui.ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                                  child: Container(
-                                    height: 1,
-                                    color: Colors.white.withAlpha(10),
-                                  ),
-                                ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(Icons.lock,
+                                size: 18, color: theme.colorScheme.primary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Secured Note',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: textColor.withAlpha((0.7 * 255).toInt()),
+                                fontFamily: 'Nunito',
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          // Preview area
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 2.0),
-                            child: _buildPlainPreviewWithDots(
-                                widget.note.content, textColor,
-                                maxLines: 2),
-                          ),
-                          // Spacer to push tags/date to the bottom
-                          const Spacer(),
-                          // Tags above the date (bottom of card)
-                          if (widget.note.tags.isNotEmpty)
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(bottom: 1.0, top: 0.0),
-                              child: Wrap(
-                                spacing: 1,
-                                runSpacing: 1,
+                          ],
+                        ),
+                        const Spacer(),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              formattedDate,
+                              style: TextStyle(
+                                fontSize:
+                                    widget.mode == NoteCardMode.grid ? 8 : 10,
+                                color: textColor,
+                                fontFamily: 'Nunito',
+                              ),
+                            ),
+                            if (widget.note.tags.isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              Wrap(
+                                spacing: 4,
+                                runSpacing: 4,
                                 children: widget.note.tags.map((tag) {
                                   return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4, vertical: 1),
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal:
+                                            widget.mode == NoteCardMode.grid
+                                                ? 4
+                                                : 10,
+                                        vertical:
+                                            widget.mode == NoteCardMode.grid
+                                                ? 1
+                                                : 4),
                                     decoration: BoxDecoration(
                                       color: tagBgColor,
-                                      borderRadius: BorderRadius.circular(6),
+                                      borderRadius: BorderRadius.circular(
+                                          widget.mode == NoteCardMode.grid
+                                              ? 6
+                                              : 12),
                                     ),
                                     child: Text(
                                       tag,
                                       style: TextStyle(
-                                        fontSize: 8,
+                                        fontSize:
+                                            widget.mode == NoteCardMode.grid
+                                                ? 8
+                                                : 12,
                                         color: tagTextColor,
                                         fontWeight: FontWeight.w600,
                                         fontFamily: 'Nunito',
@@ -409,26 +400,145 @@ class _NoteCardState extends State<NoteCard>
                                   );
                                 }).toList(),
                               ),
+                            ]
+                          ],
+                        ),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Top content: title, icons, preview
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            if (widget.note.isPinned)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 1.0),
+                                child: Icon(
+                                  Icons.push_pin,
+                                  size: widget.mode == NoteCardMode.grid
+                                      ? 12
+                                      : 16,
+                                  color: textColor,
+                                ),
+                              ),
+                            Expanded(
+                              child: Text(
+                                widget.note.title.isEmpty
+                                    ? 'Untitled'
+                                    : widget.note.title,
+                                style: TextStyle(
+                                  fontSize: widget.mode == NoteCardMode.grid
+                                      ? 18
+                                      : 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                  fontFamily: 'Nunito',
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          // Small space between tags and date
-                          if (widget.note.tags.isNotEmpty)
-                            const SizedBox(height: 1),
-                          // Date at the very bottom
-                          Text(
-                            formattedDate,
-                            style: TextStyle(
-                              fontSize: 8,
-                              color: textColor,
-                              fontFamily: 'Nunito',
+                            if (widget.onFavoriteToggle != null)
+                              Padding(
+                                padding: EdgeInsets.only(
+                                    left: widget.mode == NoteCardMode.grid
+                                        ? 2.0
+                                        : 8.0),
+                                child: IconButton(
+                                  icon: Icon(
+                                    widget.note.isFavorite
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: heartColor,
+                                    size: widget.mode == NoteCardMode.grid
+                                        ? 18
+                                        : 20,
+                                  ),
+                                  onPressed: widget.onFavoriteToggle,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  tooltip: 'Favorite',
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        // Centered, short blurry divider for both modes (60% width)
+                        Align(
+                          alignment: Alignment.center,
+                          child: FractionallySizedBox(
+                            widthFactor: 0.8,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(1),
+                              child: BackdropFilter(
+                                filter:
+                                    ui.ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                                child: Container(
+                                  height: 1,
+                                  color: Colors.white.withAlpha(10),
+                                ),
+                              ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Preview area
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                          child: _buildPlainPreviewWithDots(
+                              widget.note.content, textColor,
+                              maxLines: 2),
+                        ),
+                        // Spacer to push tags/date to the bottom
+                        const Spacer(),
+                        // Tags above the date (bottom of card)
+                        if (widget.note.tags.isNotEmpty)
+                          Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: 1.0, top: 0.0),
+                            child: Wrap(
+                              spacing: 1,
+                              runSpacing: 1,
+                              children: widget.note.tags.map((tag) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: tagBgColor,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    tag,
+                                    style: TextStyle(
+                                      fontSize: 8,
+                                      color: tagTextColor,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Nunito',
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        // Small space between tags and date
+                        if (widget.note.tags.isNotEmpty)
+                          const SizedBox(height: 1),
+                        // Date at the very bottom
+                        Text(
+                          formattedDate,
+                          style: TextStyle(
+                            fontSize: 8,
+                            color: textColor,
+                            fontFamily: 'Nunito',
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

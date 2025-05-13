@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../widgets/store_badges.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -60,18 +59,12 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   'please contact us at info.peteks@gmail.com',
             ),
             const SizedBox(height: 32),
-            const Center(
-              child: Text(
-                'Download Peteks',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+            Center(
+              child: Image.asset(
+                'assets/peteks.png',
+                height: 60,
               ),
             ),
-            const SizedBox(height: 16),
-            const StoreBadges(height: 48),
-            const SizedBox(height: 32),
           ],
         ),
       ),

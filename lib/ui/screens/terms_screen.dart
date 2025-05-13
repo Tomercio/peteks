@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../widgets/store_badges.dart';
 
 class TermsScreen extends StatelessWidget {
   const TermsScreen({super.key});
@@ -32,7 +31,7 @@ class TermsScreen extends StatelessWidget {
             const SizedBox(height: 24),
             _buildSection(
               '1. Acceptance of Terms',
-              'By downloading, installing, or using Peteks, you agree to be bound by these Terms of Service.',
+              'By using Peteks, you agree to these terms. If you do not agree, do not use the app.',
             ),
             _buildSection(
               '2. Use of Service',
@@ -40,7 +39,7 @@ class TermsScreen extends StatelessWidget {
             ),
             _buildSection(
               '3. User Content',
-              'You retain all rights to your content. You are solely responsible for the content you create and store using Peteks.',
+              'You are responsible for the content you create and store in Peteks. We do not access or share your data.',
             ),
             _buildSection(
               '4. Disclaimer',
@@ -48,7 +47,7 @@ class TermsScreen extends StatelessWidget {
             ),
             _buildSection(
               '5. Limitation of Liability',
-              'To the maximum extent permitted by law, Peteks and its developers shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of data, use, or other intangible losses, resulting from your use of the app.',
+              'Peteks is provided as-is. We are not liable for any damages or data loss.',
             ),
             _buildSection(
               '6. No Warranty',
@@ -70,19 +69,17 @@ class TermsScreen extends StatelessWidget {
               '10. Contact',
               'For any questions or concerns, contact us at info.peteks@gmail.com.',
             ),
+            _buildSection(
+              '11. Changes to Terms',
+              'We may update these terms from time to time. Continued use of the app means you accept the new terms.',
+            ),
             const SizedBox(height: 32),
-            const Center(
-              child: Text(
-                'Download Peteks',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+            Center(
+              child: Image.asset(
+                'assets/peteks.png',
+                height: 60,
               ),
             ),
-            const SizedBox(height: 16),
-            const StoreBadges(height: 48),
-            const SizedBox(height: 32),
           ],
         ),
       ),

@@ -243,7 +243,7 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                   ? (_note.isPinned ? 'Pinned!' : 'Unpinned!')
                   : 'Note saved',
             ),
-            duration: const Duration(seconds: 1),
+            duration: const Duration(milliseconds: 500),
           ),
         );
       }
@@ -1212,7 +1212,10 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
               });
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Pattern set for note')),
+                const SnackBar(
+                  content: Text('Pattern set for note'),
+                  duration: Duration(milliseconds: 600),
+                ),
               );
             },
           ),

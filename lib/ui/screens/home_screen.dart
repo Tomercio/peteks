@@ -27,6 +27,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   List<Note> _filteredNotes = [];
   String? _selectedTag;
   bool _showOnlyFavorites = false;
+  bool _showOnlySecured = false;
 
   // Add view mode state
   ViewMode _viewMode = ViewMode.list;
@@ -124,32 +125,27 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _applyFilters() {
     setState(() {
-      // Start with all notes
       _filteredNotes = List.from(_notes);
-
-      // Apply tag filter if selected
       if (_selectedTag != null) {
         _filteredNotes = _filteredNotes
             .where((note) => note.tags.contains(_selectedTag))
             .toList();
       }
-
-      // Apply favorites filter if enabled
       if (_showOnlyFavorites) {
         _filteredNotes =
             _filteredNotes.where((note) => note.isFavorite).toList();
       }
-
-      // Sort notes: Pinned first, then by position, then by modified date
+      // Only show secure notes if the secret filter is active
+      if (_showOnlySecured) {
+        _filteredNotes = _filteredNotes.where((note) => note.isSecure).toList();
+      } else {
+        _filteredNotes =
+            _filteredNotes.where((note) => !note.isSecure).toList();
+      }
       _filteredNotes.sort((a, b) {
-        // First pinned vs unpinned
         if (a.isPinned && !b.isPinned) return -1;
         if (!a.isPinned && b.isPinned) return 1;
-
-        // Between two pinned or two unpinned notes, sort by position
         if (a.position != b.position) return a.position.compareTo(b.position);
-
-        // If position is the same (or not defined), sort by modification date
         return b.modifiedAt.compareTo(a.modifiedAt);
       });
     });
@@ -211,7 +207,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         greeting = 'Good night, $nickname! 😴';
       } else if (hour < 12) {
         greeting = 'Good morning, $nickname! 🌞';
-      } else if (hour < 16) {
+      } else if (hour < 19) {
         greeting = 'Good afternoon, $nickname! 🌞';
       } else {
         greeting = 'Good evening, $nickname! 🌙';
@@ -282,50 +278,74 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
 
       // Tags bar
-      body: Column(
+      body: Stack(
         children: [
-          if (greeting != null)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 16, left: 20, bottom: 8),
-                child: FadeTransition(
-                  opacity: _greetingFade,
-                  child: SlideTransition(
-                    position: _greetingSlide,
-                    child: Text(
-                      greeting,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).brightness == Brightness.light
-                            ? const Color(0xFF7C6F62)
-                            : const Color(0xFFF4ECD9),
-                        fontFamily: 'Nunito',
+          Column(
+            children: [
+              if (greeting != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.only(top: 16, left: 20, bottom: 8),
+                    child: FadeTransition(
+                      opacity: _greetingFade,
+                      child: SlideTransition(
+                        position: _greetingSlide,
+                        child: Text(
+                          greeting,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                Theme.of(context).brightness == Brightness.light
+                                    ? const Color(0xFF7C6F62)
+                                    : const Color(0xFFF4ECD9),
+                            fontFamily: 'Nunito',
+                          ),
+                          textAlign: TextAlign.left,
+                        ),
                       ),
-                      textAlign: TextAlign.left,
                     ),
                   ),
                 ),
+              if (_notes.isNotEmpty) _buildTagsBar(),
+
+              // Notes display - Grid or List
+              Expanded(
+                child: _filteredNotes.isEmpty
+                    ? Center(
+                        child: Text(
+                          _selectedTag != null || _showOnlyFavorites
+                              ? 'No notes match your filters'
+                              : 'No notes yet. Tap + to create one!',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      )
+                    : (_viewMode == ViewMode.list
+                        ? _buildListView()
+                        : _buildGridView()),
+              ),
+            ],
+          ),
+          // Secret button in bottom-left (only if there is a secure note)
+          if (_notes.any((n) => n.isSecure))
+            Positioned(
+              left: 0,
+              bottom: 0,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showOnlySecured = !_showOnlySecured;
+                    _applyFilters();
+                  });
+                },
+                child: CustomPaint(
+                  size: const Size(28, 28),
+                  painter: _FoldedCornerButtonPainter(),
+                ),
               ),
             ),
-          if (_notes.isNotEmpty) _buildTagsBar(),
-
-          // Notes display - Grid or List
-          Expanded(
-            child: _filteredNotes.isEmpty
-                ? Center(
-                    child: Text(
-                      _selectedTag != null || _showOnlyFavorites
-                          ? 'No notes match your filters'
-                          : 'No notes yet. Tap + to create one!',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  )
-                : (_viewMode == ViewMode.list
-                    ? _buildListView()
-                    : _buildGridView()),
-          ),
         ],
       ),
       floatingActionButton: Column(
@@ -650,7 +670,12 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     // Get all unique tags
     final Set<String> tags = {};
     for (final note in _notes) {
-      tags.addAll(note.tags);
+      // Only include tags from non-secure notes unless secret filter is active
+      if (_showOnlySecured) {
+        if (note.isSecure) tags.addAll(note.tags);
+      } else {
+        if (!note.isSecure) tags.addAll(note.tags);
+      }
     }
 
     return FadeTransition(
@@ -715,4 +740,29 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
+}
+
+class _FoldedCornerButtonPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.black.withAlpha((0.08 * 255).toInt())
+      ..style = PaintingStyle.fill;
+    final double radius = 10;
+    final path = Path()
+      ..moveTo(0, size.height - radius)
+      ..quadraticBezierTo(0, size.height, radius, size.height)
+      ..lineTo(size.width - radius, size.height)
+      ..quadraticBezierTo(
+          size.width, size.height, size.width, size.height - radius)
+      ..lineTo(size.width, radius)
+      ..quadraticBezierTo(size.width, 0, size.width - radius, 0)
+      ..lineTo(10, 0)
+      ..quadraticBezierTo(0, 0, 0, radius)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

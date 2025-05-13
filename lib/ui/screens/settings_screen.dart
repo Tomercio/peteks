@@ -98,6 +98,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       body: ListView(
+        padding: const EdgeInsets.all(16),
         children: [
           // App Theme Section
           _buildSectionHeader(context, 'Appearance'),
@@ -167,21 +168,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 context: context,
                 applicationName: 'Peteks',
                 applicationVersion: _version,
-                applicationIcon: const FlutterLogo(size: 64),
+                applicationIcon: Image.asset(
+                  'assets/peteks.png',
+                  height: 64,
+                ),
                 children: [
                   const Text(
                     'Peteks is a simple and elegant note-taking app that helps you organize your thoughts and ideas.',
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Download Peteks',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const StoreBadges(height: 48),
                 ],
               );
             },
@@ -199,6 +193,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: const Icon(Icons.description_outlined),
             onTap: () {
               Navigator.pushNamed(context, '/terms');
+            },
+          ),
+          ListTile(
+            title: const Text('About'),
+            leading: const Icon(Icons.info_outline),
+            onTap: () {
+              Navigator.pushNamed(context, '/about');
             },
           ),
           ListTile(
