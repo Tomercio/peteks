@@ -114,9 +114,7 @@ class StorageService extends ChangeNotifier {
   }
 
   String? getNickname() {
-    if (_nickname == null) {
-      _nickname = _settingsBox.get('nickname');
-    }
+    _nickname ??= _settingsBox.get('nickname');
     return _nickname;
   }
 
