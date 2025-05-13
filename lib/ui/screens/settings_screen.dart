@@ -46,8 +46,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final storageService = Provider.of<StorageService>(context, listen: false);
     final hasSetNickname =
         storageService.getSetting('hasSetNickname', defaultValue: false);
+    final currentNickname = storageService.getNickname();
 
-    if (!hasSetNickname) {
+    if (!hasSetNickname || currentNickname == null) {
       final controller = TextEditingController();
       await showDialog(
         context: context,
