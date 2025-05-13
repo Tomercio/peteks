@@ -381,15 +381,18 @@ class _NoteCardState extends State<NoteCard>
                                         ? Icons.favorite
                                         : Icons.favorite_border,
                                     color: heartColor,
-                                    size: 18,
+                                    size: 16,
                                   ),
                                   onPressed: widget.onFavoriteToggle,
                                   padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 24,
+                                    minHeight: 24,
+                                  ),
                                   tooltip: 'Favorite',
                                 ),
                               ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             // Preview area
                             Padding(
                               padding:
