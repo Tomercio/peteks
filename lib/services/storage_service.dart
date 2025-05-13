@@ -3,7 +3,7 @@ import '../models/note.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-class StorageService {
+class StorageService extends ChangeNotifier {
   static const String _notesBoxName = 'notes_box';
   static const String _settingsBoxName = 'settings_box';
 
@@ -18,6 +18,8 @@ class StorageService {
   }
 
   StorageService._internal();
+
+  String? _nickname;
 
   // Initialize Hive and open boxes
   Future<void> init() async {
@@ -102,13 +104,13 @@ class StorageService {
   }
 
   // Nickname operations
-  Future<void> setNickname(String nickname) async {
-    await _settingsBox.put('nickname', nickname);
+  void setNickname(String nickname) {
+    _nickname = nickname;
+    saveSetting('nickname', nickname);
+    notifyListeners();
   }
 
-  String? getNickname() {
-    return _settingsBox.get('nickname') as String?;
-  }
+  String? getNickname() => _nickname;
 
   // Close boxes when app is shutting down
   Future<void> close() async {

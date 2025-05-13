@@ -208,16 +208,15 @@ class _NoteCardState extends State<NoteCard>
                           ],
                         ),
                         const SizedBox(height: 8),
-                        // Ultra thin blurry divider for both modes
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(1),
-                          child: BackdropFilter(
-                            filter: ui.ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                            child: Container(
-                              height: 1,
-                              width: double.infinity,
-                              color: Colors.white.withAlpha(10),
-                            ),
+                        Container(
+                          height: 1.5,
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFB0AFAF)
+                                .withAlpha((0.12 * 255).toInt()),
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -332,76 +331,24 @@ class _NoteCardState extends State<NoteCard>
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Icon(Icons.lock,
-                                size: 18, color: theme.colorScheme.primary),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Secured Note',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: textColor.withAlpha((0.7 * 255).toInt()),
-                                fontFamily: 'Nunito',
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.lock,
+                                  size: 22, color: theme.colorScheme.primary),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Secured Note',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color:
+                                      textColor.withAlpha((0.7 * 255).toInt()),
+                                  fontFamily: 'Nunito',
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              formattedDate,
-                              style: TextStyle(
-                                fontSize:
-                                    widget.mode == NoteCardMode.grid ? 8 : 10,
-                                color: textColor,
-                                fontFamily: 'Nunito',
-                              ),
-                            ),
-                            if (widget.note.tags.isNotEmpty) ...[
-                              const SizedBox(width: 8),
-                              Wrap(
-                                spacing: 4,
-                                runSpacing: 4,
-                                children: widget.note.tags.map((tag) {
-                                  return Container(
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal:
-                                            widget.mode == NoteCardMode.grid
-                                                ? 4
-                                                : 10,
-                                        vertical:
-                                            widget.mode == NoteCardMode.grid
-                                                ? 1
-                                                : 4),
-                                    decoration: BoxDecoration(
-                                      color: tagBgColor,
-                                      borderRadius: BorderRadius.circular(
-                                          widget.mode == NoteCardMode.grid
-                                              ? 6
-                                              : 12),
-                                    ),
-                                    child: Text(
-                                      tag,
-                                      style: TextStyle(
-                                        fontSize:
-                                            widget.mode == NoteCardMode.grid
-                                                ? 8
-                                                : 12,
-                                        color: tagTextColor,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'Nunito',
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ]
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     )
@@ -465,22 +412,15 @@ class _NoteCardState extends State<NoteCard>
                           ],
                         ),
                         const SizedBox(height: 4),
-                        // Centered, short blurry divider for both modes (60% width)
-                        Align(
-                          alignment: Alignment.center,
-                          child: FractionallySizedBox(
-                            widthFactor: 0.8,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(1),
-                              child: BackdropFilter(
-                                filter:
-                                    ui.ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                                child: Container(
-                                  height: 1,
-                                  color: Colors.white.withAlpha(10),
-                                ),
-                              ),
-                            ),
+                        Container(
+                          height: 1.5,
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFB0AFAF)
+                                .withAlpha((0.12 * 255).toInt()),
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
                         const SizedBox(height: 8),

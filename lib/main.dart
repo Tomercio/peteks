@@ -185,7 +185,8 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<StorageService>.value(value: widget.storageService),
+        ChangeNotifierProvider<StorageService>.value(
+            value: widget.storageService),
         ChangeNotifierProvider<ThemeService>(
           create: (_) => ThemeService(_themeMode, widget.storageService),
         ),

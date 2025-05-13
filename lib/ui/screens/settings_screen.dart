@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../main.dart'; // Import ThemeService from main
 import 'package:package_info_plus/package_info_plus.dart';
-import '../widgets/store_badges.dart';
 import '../../services/google_drive_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
@@ -157,8 +156,106 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const Divider(),
 
-          // About Section
-          _buildSectionHeader(context, 'About'),
+          // Change Nickname FIRST
+          ListTile(
+            leading: const Icon(Icons.person_outline),
+            title: const Text('Change Nickname'),
+            subtitle: Text(Provider.of<StorageService>(context, listen: false)
+                    .getNickname() ??
+                'No nickname set'),
+            onTap: () async {
+              final storageService =
+                  Provider.of<StorageService>(context, listen: false);
+              final controller = TextEditingController(
+                  text: storageService.getNickname() ?? '');
+              final result = await showDialog<String>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Change Nickname'),
+                  content: TextField(
+                    controller: controller,
+                    decoration:
+                        const InputDecoration(hintText: 'Enter your nickname'),
+                    autofocus: true,
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('CANCEL'),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.of(context).pop(controller.text.trim()),
+                      child: const Text('SAVE'),
+                    ),
+                  ],
+                ),
+              );
+              if (result != null) {
+                storageService.setNickname(result);
+                setState(() {}); // Update the subtitle immediately
+                // ignore: use_build_context_synchronously
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Nickname updated!')),
+                );
+              }
+            },
+          ),
+
+          // Privacy Policy
+          ListTile(
+            title: const Text('Privacy Policy'),
+            leading: const Icon(Icons.privacy_tip_outlined),
+            onTap: () {
+              Navigator.pushNamed(context, '/privacy');
+            },
+          ),
+          // Terms of Service
+          ListTile(
+            title: const Text('Terms of Service'),
+            leading: const Icon(Icons.description_outlined),
+            onTap: () {
+              Navigator.pushNamed(context, '/terms');
+            },
+          ),
+          // Rate the App
+          ListTile(
+            title: const Text('Rate the App'),
+            leading: const Icon(Icons.star_outline),
+            onTap: () {
+              final packageName =
+                  'com.peteks.app'; // Replace with your actual package name
+              final url = Uri.parse(
+                'market://details?id=$packageName',
+              );
+              launchUrl(url, mode: LaunchMode.externalApplication);
+            },
+          ),
+          // Share the App
+          ListTile(
+            title: const Text('Share the App'),
+            leading: const Icon(Icons.share_outlined),
+            onTap: () {
+              final packageName =
+                  'com.peteks.app'; // Replace with your actual package name
+              final url = Uri.parse(
+                'https://play.google.com/store/apps/details?id=$packageName',
+              );
+              Share.share(
+                'Check out Peteks - A beautiful note-taking app!\n$url',
+                subject: 'Peteks - Note Taking App',
+              );
+            },
+          ),
+          // About
+          ListTile(
+            title: const Text('About'),
+            leading: const Icon(Icons.info_outline),
+            onTap: () {
+              Navigator.pushNamed(context, '/about');
+            },
+          ),
+          // App Version LAST
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('App Version'),
@@ -177,56 +274,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     'Peteks is a simple and elegant note-taking app that helps you organize your thoughts and ideas.',
                   ),
                 ],
-              );
-            },
-          ),
-
-          ListTile(
-            title: const Text('Privacy Policy'),
-            leading: const Icon(Icons.privacy_tip_outlined),
-            onTap: () {
-              Navigator.pushNamed(context, '/privacy');
-            },
-          ),
-          ListTile(
-            title: const Text('Terms of Service'),
-            leading: const Icon(Icons.description_outlined),
-            onTap: () {
-              Navigator.pushNamed(context, '/terms');
-            },
-          ),
-          ListTile(
-            title: const Text('About'),
-            leading: const Icon(Icons.info_outline),
-            onTap: () {
-              Navigator.pushNamed(context, '/about');
-            },
-          ),
-          ListTile(
-            title: const Text('Rate the App'),
-            leading: const Icon(Icons.star_outline),
-            onTap: () {
-              // Open app store rating page
-              final packageName =
-                  'com.peteks.app'; // Replace with your actual package name
-              final url = Uri.parse(
-                'market://details?id=$packageName',
-              );
-              launchUrl(url, mode: LaunchMode.externalApplication);
-            },
-          ),
-          ListTile(
-            title: const Text('Share the App'),
-            leading: const Icon(Icons.share_outlined),
-            onTap: () {
-              final packageName =
-                  'com.peteks.app'; // Replace with your actual package name
-              final url = Uri.parse(
-                'https://play.google.com/store/apps/details?id=$packageName',
-              );
-              Share.share(
-                'Check out Peteks - A beautiful note-taking app!\n$url',
-                subject: 'Peteks - Note Taking App',
               );
             },
           ),
