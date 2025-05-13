@@ -36,6 +36,9 @@ class StorageService extends ChangeNotifier {
     // Open boxes
     _notesBox = await Hive.openBox<Note>(_notesBoxName);
     _settingsBox = await Hive.openBox(_settingsBoxName);
+
+    // Load nickname from storage
+    _nickname = _settingsBox.get('nickname');
   }
 
   // CRUD Operations for Notes
@@ -106,11 +109,16 @@ class StorageService extends ChangeNotifier {
   // Nickname operations
   void setNickname(String nickname) {
     _nickname = nickname;
-    saveSetting('nickname', nickname);
+    _settingsBox.put('nickname', nickname);
     notifyListeners();
   }
 
-  String? getNickname() => _nickname;
+  String? getNickname() {
+    if (_nickname == null) {
+      _nickname = _settingsBox.get('nickname');
+    }
+    return _nickname;
+  }
 
   // Close boxes when app is shutting down
   Future<void> close() async {
