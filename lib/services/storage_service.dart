@@ -101,6 +101,15 @@ class StorageService {
     return _settingsBox.get(key, defaultValue: defaultValue);
   }
 
+  // Nickname operations
+  Future<void> setNickname(String nickname) async {
+    await _settingsBox.put('nickname', nickname);
+  }
+
+  String? getNickname() {
+    return _settingsBox.get('nickname') as String?;
+  }
+
   // Close boxes when app is shutting down
   Future<void> close() async {
     await _notesBox.close();

@@ -7,7 +7,6 @@ import 'package:flutter_quill/flutter_quill.dart' as quill;
 import '../../models/note.dart';
 import '../../services/storage_service.dart';
 import '../../services/image_service.dart';
-import '../../services/notification_service.dart';
 import '../../services/share_service.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -230,14 +229,6 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
         imagePaths: _imagePaths,
         modifiedAt: DateTime.now(),
       );
-
-      // Handle reminder changes
-      final notificationService =
-          Provider.of<NotificationService>(context, listen: false);
-      if (updatedNote.reminderDateTime != null) {
-        await notificationService.scheduleNoteReminder(updatedNote,
-            context: context);
-      }
 
       await _storageService.saveNote(updatedNote);
       _note = updatedNote;
@@ -520,12 +511,6 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
       ),
     );
     if (confirm == true) {
-      // Cancel reminder if exists
-      if (_note.reminderDateTime != null) {
-        final notificationService =
-            Provider.of<NotificationService>(context, listen: false);
-        await notificationService.cancelNoteReminder(_note);
-      }
       // Delete images
       for (final imagePath in _note.imagePaths) {
         await ImageService.deleteImage(imagePath);
@@ -606,21 +591,6 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                 onPressed: _togglePin,
                 tooltip: 'Toggle pin',
               ),
-            ),
-            const SizedBox(width: 4),
-            // Reminder icon
-            IconButton(
-              icon: Icon(
-                _note.reminderDateTime != null
-                    ? Icons.notifications_active
-                    : Icons.notifications_none,
-                color: appBarIconColor,
-                size: 20,
-              ),
-              onPressed: _pickReminder,
-              tooltip: _note.reminderDateTime != null
-                  ? 'Edit reminder'
-                  : 'Add reminder',
             ),
             const SizedBox(width: 4),
             // Save icon with animation
@@ -835,38 +805,6 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                       filled: false,
                     ),
                   ),
-
-                  // Reminder chip
-                  if (_note.reminderDateTime != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: InputChip(
-                        avatar: Icon(Icons.notifications_active,
-                            size: 18, color: appBarIconColor),
-                        label: Text(
-                          'Remind: '
-                          '${_note.reminderDateTime!.toLocal().toString().substring(0, 16)}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: titleTextColor,
-                            fontFamily: 'Nunito',
-                          ),
-                        ),
-                        onDeleted: () async {
-                          // Cancel the reminder
-                          final notificationService =
-                              Provider.of<NotificationService>(context,
-                                  listen: false);
-                          await notificationService.cancelNoteReminder(_note);
-
-                          setState(() {
-                            _note = _note.copyWith(reminderDateTime: null);
-                            _hasChanges = true;
-                          });
-                          await _saveNote(); // Save the note after removing the reminder
-                        },
-                      ),
-                    ),
 
                   // Date
                   Padding(
@@ -1090,97 +1028,6 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
       }
       Navigator.of(context).pop();
     }
-  }
-
-  // Show date & time picker for reminder
-  Future<void> _pickReminder() async {
-    final now = DateTime.now();
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _note.reminderDateTime ?? now,
-      firstDate: now,
-      lastDate: DateTime(now.year + 5),
-    );
-    if (pickedDate == null) return;
-    final pickedTime = await showTimePicker(
-      context: context,
-      initialTime: _note.reminderDateTime != null
-          ? TimeOfDay.fromDateTime(_note.reminderDateTime!)
-          : TimeOfDay.now(),
-    );
-    if (pickedTime == null) return;
-    final reminderDateTime = DateTime(
-      pickedDate.year,
-      pickedDate.month,
-      pickedDate.day,
-      pickedTime.hour,
-      pickedTime.minute,
-    );
-    // Check if the reminder is in the future
-    if (!reminderDateTime.isAfter(DateTime.now())) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a future date and time.')),
-      );
-      return;
-    }
-    // Get notification service
-    final notificationService =
-        Provider.of<NotificationService>(context, listen: false);
-    // Cancel existing reminder if any
-    if (_note.reminderDateTime != null) {
-      await notificationService.cancelNoteReminder(_note);
-    }
-    setState(() {
-      _note = _note.copyWith(reminderDateTime: reminderDateTime);
-      _hasChanges = true;
-    });
-    // Schedule new reminder
-    await notificationService.scheduleNoteReminder(_note, context: context);
-  }
-
-  // Add this new method for showing share options
-  void _showShareOptions() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.text_snippet),
-              title: const Text('Share as Text'),
-              subtitle: const Text('Share note content as plain text'),
-              onTap: () {
-                Navigator.pop(context);
-                ShareService().shareAsText(_note);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.code),
-              title: const Text('Share as Markdown'),
-              subtitle: const Text('Share note with markdown formatting'),
-              onTap: () {
-                Navigator.pop(context);
-                ShareService().shareAsMarkdown(_note);
-              },
-            ),
-            if (_imagePaths.isNotEmpty)
-              ListTile(
-                leading: const Icon(Icons.file_copy),
-                title: const Text('Share as File'),
-                subtitle: const Text('Share note and images as files'),
-                onTap: () {
-                  Navigator.pop(context);
-                  ShareService().shareAsFile(_note);
-                },
-              ),
-          ],
-        ),
-      ),
-    );
   }
 
   // Add the _addVoiceRecording method
@@ -1458,6 +1305,50 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showShareOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.text_snippet),
+              title: const Text('Share as Text'),
+              subtitle: const Text('Share note content as plain text'),
+              onTap: () {
+                Navigator.pop(context);
+                ShareService().shareAsText(_note);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.code),
+              title: const Text('Share as Markdown'),
+              subtitle: const Text('Share note with markdown formatting'),
+              onTap: () {
+                Navigator.pop(context);
+                ShareService().shareAsMarkdown(_note);
+              },
+            ),
+            if (_imagePaths.isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.file_copy),
+                title: const Text('Share as File'),
+                subtitle: const Text('Share note and images as files'),
+                onTap: () {
+                  Navigator.pop(context);
+                  ShareService().shareAsFile(_note);
+                },
+              ),
+          ],
+        ),
       ),
     );
   }

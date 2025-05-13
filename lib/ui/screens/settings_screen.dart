@@ -21,6 +21,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   String _version = '';
+  bool _nicknameChanged = false; // Track if nickname changed
 
   @override
   void didChangeDependencies() {
@@ -31,6 +32,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadVersion();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _promptForNicknameIfNeeded());
   }
 
   Future<void> _loadVersion() async {
@@ -38,6 +41,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _version = packageInfo.version;
     });
+  }
+
+  Future<void> _promptForNicknameIfNeeded() async {
+    final storageService = Provider.of<StorageService>(context, listen: false);
+    final nickname = storageService.getNickname();
+    if (nickname == null || nickname.trim().isEmpty) {
+      final controller = TextEditingController();
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('What is your nickname?'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'Enter your nickname'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                if (controller.text.trim().isNotEmpty) {
+                  storageService.setNickname(controller.text.trim());
+                  _nicknameChanged = true; // Mark as changed
+                  Navigator.of(context).pop(); // Only close dialog
+                  setState(() {}); // Optionally update settings UI
+                }
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   @override
@@ -52,7 +88,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('Settings'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, _nicknameChanged),
         ),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(

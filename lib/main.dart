@@ -7,7 +7,6 @@ import 'ui/screens/privacy_policy_screen.dart';
 import 'ui/screens/terms_screen.dart';
 import 'services/storage_service.dart';
 import 'services/image_service.dart';
-import 'services/notification_service.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'providers/theme_provider.dart';
@@ -117,16 +116,11 @@ void main() async {
   // Initialize image service
   await ImageService.init();
 
-  // Initialize notification service
-  final notificationService = NotificationService();
-  await notificationService.initialize();
-
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
       child: MyApp(
         storageService: storageService,
-        notificationService: notificationService,
       ),
     ),
   );
@@ -134,7 +128,6 @@ void main() async {
 
 class MyApp extends StatefulWidget {
   final StorageService storageService;
-  final NotificationService notificationService;
 
   // Add a static navigator key
   static final GlobalKey<NavigatorState> navigatorKey =
@@ -143,7 +136,6 @@ class MyApp extends StatefulWidget {
   const MyApp({
     super.key,
     required this.storageService,
-    required this.notificationService,
   });
 
   @override
@@ -193,7 +185,6 @@ class _MyAppState extends State<MyApp> {
     return MultiProvider(
       providers: [
         Provider<StorageService>.value(value: widget.storageService),
-        Provider<NotificationService>.value(value: widget.notificationService),
         ChangeNotifierProvider<ThemeService>(
           create: (_) => ThemeService(_themeMode, widget.storageService),
         ),

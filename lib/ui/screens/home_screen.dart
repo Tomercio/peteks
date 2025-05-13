@@ -178,11 +178,44 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final storageService = Provider.of<StorageService>(context, listen: false);
+    final nickname = storageService.getNickname();
+    String? greeting;
+    if (nickname != null && nickname.trim().isNotEmpty) {
+      final hour = DateTime.now().hour;
+      if (hour < 5) {
+        greeting = 'Good night, $nickname ! 😴';
+      } else if (hour < 12) {
+        greeting = 'Good morning, $nickname ! 🌞';
+      } else if (hour < 18) {
+        greeting = 'Good afternoon, $nickname ! 🌞';
+      } else {
+        greeting = 'Good evening, $nickname ! 🌙';
+      }
+    }
     return Scaffold(
       appBar: AppBar(
-        title: Image.asset(
-          'assets/peteks.png',
-          height: 96,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/peteks.png',
+              height: 80,
+            ),
+            if (greeting != null) ...[
+              const SizedBox(width: 16),
+              Text(
+                greeting,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.primary,
+                      fontFamily: 'Nunito',
+                    ),
+              ),
+            ],
+          ],
         ),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -221,10 +254,10 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           // Settings with proper provider approach
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {
+            onPressed: () async {
               final themeService =
                   Provider.of<ThemeService>(context, listen: false);
-              Navigator.of(context).push(
+              final result = await Navigator.of(context).push(
                 MaterialPageRoute(
                   settings: const RouteSettings(name: '/settings'),
                   builder: (context) => ChangeNotifierProvider.value(
@@ -233,6 +266,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ),
               );
+              if (result == true) {
+                setState(() {}); // Rebuild to update greeting
+              }
             },
             tooltip: 'Settings',
           ),
@@ -596,26 +632,14 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     _selectTag(null);
                   }
                 },
-                avatar: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Icon(
-                      Icons.label_outline,
-                      color: _selectedTag == null
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
-                    ),
-                    if (_selectedTag == null)
-                      const Positioned(
-                        right: 2,
-                        bottom: 2,
-                        child: Icon(Icons.check, size: 12, color: Colors.green),
-                      ),
-                  ],
-                ),
+                avatar: _selectedTag == null
+                    ? const Icon(Icons.check, size: 18, color: Colors.green)
+                    : Icon(Icons.label_outline,
+                        color: Theme.of(context).colorScheme.primary),
+                labelStyle: Theme.of(context).chipTheme.labelStyle,
+                backgroundColor: Theme.of(context).chipTheme.backgroundColor,
                 elevation: 2,
                 pressElevation: 6,
-                backgroundColor: Theme.of(context).chipTheme.backgroundColor,
               ),
             ),
             // All other tags

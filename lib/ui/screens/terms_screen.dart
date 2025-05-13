@@ -24,7 +24,7 @@ class TermsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Last updated: March 2024',
+              'Last updated: May 2025',
               style: TextStyle(
                 color: Colors.grey,
               ),
@@ -47,8 +47,28 @@ class TermsScreen extends StatelessWidget {
               'Peteks is provided "as is" without any warranties. We are not responsible for any loss of data or other damages.',
             ),
             _buildSection(
-              '5. Changes to Terms',
-              'We reserve the right to modify these terms at any time. Continued use of Peteks after changes constitutes acceptance of the new terms.',
+              '5. Limitation of Liability',
+              'To the maximum extent permitted by law, Peteks and its developers shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of data, use, or other intangible losses, resulting from your use of the app.',
+            ),
+            _buildSection(
+              '6. No Warranty',
+              'Peteks is provided "as is" and "as available" without any warranties of any kind, either express or implied.',
+            ),
+            _buildSection(
+              '7. User Responsibilities',
+              'You are solely responsible for backing up your data and for compliance with all applicable laws.',
+            ),
+            _buildSection(
+              '8. Termination',
+              'We reserve the right to terminate or suspend your access to Peteks at any time, without notice, for any reason.',
+            ),
+            _buildSection(
+              '9. Governing Law',
+              'These terms are governed by the laws of Israel, without regard to its conflict of law principles.',
+            ),
+            _buildSection(
+              '10. Contact',
+              'For any questions or concerns, contact us at info.peteks@gmail.com.',
             ),
             const SizedBox(height: 32),
             const Center(
