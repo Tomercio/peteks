@@ -222,7 +222,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       appBar: AppBar(
         title: Image.asset(
           'assets/peteks.png',
-          height: 80,
+          height: 65,
         ),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -494,7 +494,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       key: const ValueKey('grid_view'),
       padding: const EdgeInsets.all(8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+        crossAxisCount: 3,
         childAspectRatio: 0.6,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,

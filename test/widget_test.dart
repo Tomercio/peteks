@@ -8,18 +8,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:peteks/services/storage_service.dart';
 import 'package:peteks/main.dart';
-import 'package:peteks/services/notification_service.dart';
 
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     // Create a mock storage service
     final storageService = StorageService();
-    final notificationService = NotificationService();
 
     // Build our app and trigger a frame.
     await tester.pumpWidget(MyApp(
       storageService: storageService,
-      notificationService: notificationService,
     ));
 
     // This is a basic smoke test that just verifies the app can build
