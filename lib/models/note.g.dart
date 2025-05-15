@@ -29,13 +29,19 @@ class NoteAdapter extends TypeAdapter<Note> {
       position: fields[9] as int,
       formattedContent: fields[10] as String,
       reminderDateTime: fields[11] as DateTime?,
+      filePath: fields[12] as String?,
+      fileType: fields[13] as String?,
+      audioPath: fields[14] as String?,
+      isSecure: fields[15] as bool,
+      securityType: fields[16] as String?,
+      securityHash: fields[17] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Note obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(18)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -59,7 +65,19 @@ class NoteAdapter extends TypeAdapter<Note> {
       ..writeByte(10)
       ..write(obj.formattedContent)
       ..writeByte(11)
-      ..write(obj.reminderDateTime);
+      ..write(obj.reminderDateTime)
+      ..writeByte(12)
+      ..write(obj.filePath)
+      ..writeByte(13)
+      ..write(obj.fileType)
+      ..writeByte(14)
+      ..write(obj.audioPath)
+      ..writeByte(15)
+      ..write(obj.isSecure)
+      ..writeByte(16)
+      ..write(obj.securityType)
+      ..writeByte(17)
+      ..write(obj.securityHash);
   }
 
   @override

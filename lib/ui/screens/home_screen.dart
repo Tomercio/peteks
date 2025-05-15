@@ -11,6 +11,7 @@ import 'settings_screen.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'package:pattern_lock/pattern_lock.dart';
+import '../../services/google_drive_service.dart';
 
 enum ViewMode { grid, list }
 
@@ -44,6 +45,9 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+
+    // Ensure Google login is restored on app startup
+    Future.microtask(() => GoogleDriveService().signIn());
 
     // Initialize tag animation controller
     _tagController = AnimationController(
@@ -328,8 +332,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ],
           ),
-          // Secret button in bottom-left (only if there is a secure note)
-          if (_notes.any((n) => n.isSecure))
+          // Secret button in bottom-left (only if there is a secure note or the filter is active)
+          if (_notes.any((n) => n.isSecure) || _showOnlySecured)
             Positioned(
               left: 0,
               bottom: 0,

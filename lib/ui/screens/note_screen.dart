@@ -188,7 +188,10 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
             child: const Text('CANCEL'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () {
+              Navigator.of(context).pop(false); // Close dialog
+              Navigator.of(context).pop(); // Pop the note screen
+            },
             child: const Text('DISCARD'),
           ),
           TextButton(
@@ -636,6 +639,7 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                         securityHash: null,
                       );
                       _hasChanges = true;
+                      _saveNote(showSnackbar: true);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                             content: Text('Security removed from note')),

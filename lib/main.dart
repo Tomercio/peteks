@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'ui/screens/home_screen.dart';
-import 'ui/screens/splash_screen.dart';
 import 'ui/screens/settings_screen.dart';
 import 'ui/screens/privacy_policy_screen.dart';
 import 'ui/screens/terms_screen.dart';
@@ -11,6 +10,8 @@ import 'services/image_service.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'providers/theme_provider.dart';
+import 'services/google_drive_service.dart';
+import 'ui/screens/splash_screen.dart';
 
 // Add enum for theme modes
 enum AppThemeMode { system, comfyLight, comfyDark }
@@ -109,35 +110,23 @@ final ThemeData comfyDarkTheme = ThemeData(
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize storage service
   final storageService = StorageService();
   await storageService.init();
-
-  // Initialize image service
-  await ImageService.init();
 
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
-      child: MyApp(
-        storageService: storageService,
-      ),
+      child: MyApp(storageService: storageService),
     ),
   );
 }
 
 class MyApp extends StatefulWidget {
   final StorageService storageService;
-
-  // Add a static navigator key
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
-  const MyApp({
-    super.key,
-    required this.storageService,
-  });
+  const MyApp({super.key, required this.storageService});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -145,20 +134,13 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   AppThemeMode _themeMode = AppThemeMode.system;
-  bool _isInitialized = false;
+  bool _showHome = false;
 
   @override
   void initState() {
     super.initState();
     _loadThemeMode();
-    // Simulate initialization delay
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
-      }
-    });
+    _init();
   }
 
   void _loadThemeMode() {
@@ -179,6 +161,21 @@ class _MyAppState extends State<MyApp> {
           break;
       }
     });
+  }
+
+  Future<void> _init() async {
+    final start = DateTime.now();
+    await ImageService.init();
+    await GoogleDriveService().signIn();
+    final elapsed = DateTime.now().difference(start);
+    if (elapsed < const Duration(milliseconds: 2000)) {
+      await Future.delayed(const Duration(milliseconds: 2000) - elapsed);
+    }
+    if (mounted) {
+      setState(() {
+        _showHome = true;
+      });
+    }
   }
 
   @override
@@ -208,10 +205,8 @@ class _MyAppState extends State<MyApp> {
                 },
                 theme: comfyLightTheme,
                 darkTheme: comfyDarkTheme,
-                home:
-                    _isInitialized ? const HomeScreen() : const SplashScreen(),
+                home: _showHome ? const HomeScreen() : const SplashScreen(),
                 routes: {
-                  // '/': (context) => const HomeScreen(), // Removed to fix error
                   '/settings': (context) => const SettingsScreen(),
                   '/privacy': (context) => const PrivacyPolicyScreen(),
                   '/terms': (context) => const TermsScreen(),
