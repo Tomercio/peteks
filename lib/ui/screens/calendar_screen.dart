@@ -90,7 +90,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 shape: BoxShape.circle,
               ),
               selectedDecoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface.withOpacity(0.8),
+                color: Theme.of(context)
+                    .colorScheme
+                    .surface
+                    .withAlpha((0.8 * 255).toInt()),
                 shape: BoxShape.circle,
               ),
               selectedTextStyle: TextStyle(
@@ -98,7 +101,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 fontWeight: FontWeight.bold,
               ),
               todayDecoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withAlpha((0.2 * 255).toInt()),
                 shape: BoxShape.circle,
               ),
               todayTextStyle: TextStyle(

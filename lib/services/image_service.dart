@@ -3,6 +3,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
+import 'package:flutter/foundation.dart';
 
 class ImageService {
   static const String _imagePrefix = 'note_image_';
@@ -35,6 +36,10 @@ class ImageService {
 
   // Pick an image from the gallery
   static Future<String?> pickImageFromGallery() async {
+    if (kIsWeb) {
+      // Web: Not supported
+      return null;
+    }
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -53,6 +58,10 @@ class ImageService {
 
   // Take a photo using the camera
   static Future<String?> takePhoto() async {
+    if (kIsWeb) {
+      // Web: Not supported
+      return null;
+    }
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: ImageSource.camera,

@@ -35,7 +35,6 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
   List<String> _tags = [];
   List<String> _imagePaths = [];
   bool _isSaving = false;
-  bool _isContentLoaded = false;
 
   // Animation variables
   late AnimationController _saveAnimationController;
@@ -111,18 +110,22 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
     try {
       if (_note.content.isNotEmpty) {
         final doc = quill.Document.fromJson(jsonDecode(_note.content));
-        _quillController = quill.QuillController(
-          document: doc,
-          selection: const TextSelection.collapsed(offset: 0),
-        );
+        setState(() {
+          _quillController = quill.QuillController(
+            document: doc,
+            selection: const TextSelection.collapsed(offset: 0),
+          );
+        });
       }
     } catch (e) {
       // If JSON parsing fails, create a new document with the content as plain text
       final doc = quill.Document()..insert(0, _note.content);
-      _quillController = quill.QuillController(
-        document: doc,
-        selection: const TextSelection.collapsed(offset: 0),
-      );
+      setState(() {
+        _quillController = quill.QuillController(
+          document: doc,
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+      });
     }
 
     // Listen for changes
@@ -130,12 +133,6 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
     _quillController.document.changes.listen((event) {
       _onContentChanged();
     });
-
-    if (mounted) {
-      setState(() {
-        _isContentLoaded = true;
-      });
-    }
   }
 
   @override
@@ -297,6 +294,16 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
 
   // Add/remove images
   void _showImageOptions() {
+    if (kIsWeb) {
+      showDialog(
+        context: context,
+        builder: (context) => const AlertDialog(
+          title: Text('Not supported'),
+          content: Text('Image picking is not available on web.'),
+        ),
+      );
+      return;
+    }
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -968,15 +975,6 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                               ),
                             ),
                           ),
-                          // Loading indicator overlay - only show if content is not loaded and note has content
-                          if (!_isContentLoaded && _note.content.isNotEmpty)
-                            Container(
-                              color: theme.colorScheme.surface
-                                  .withAlpha((0.7 * 255).toInt()),
-                              child: const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            ),
                         ],
                       ),
                     ),
