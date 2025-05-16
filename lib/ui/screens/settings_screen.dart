@@ -341,6 +341,12 @@ class _GoogleDriveSyncSectionState extends State<_GoogleDriveSyncSection> {
     setState(() => _isLoading = true);
     final service = GoogleDriveService();
     final ok = await service.signIn();
+    if (!mounted) return;
+    final storageService = Provider.of<StorageService>(context, listen: false);
+    if (ok) {
+      await storageService.saveSetting('google_signed_in', true);
+      if (!mounted) return;
+    }
     setState(() {
       _isSignedIn = ok;
       _status = ok ? 'Signed in!' : 'Sign-in failed.';
@@ -352,6 +358,10 @@ class _GoogleDriveSyncSectionState extends State<_GoogleDriveSyncSection> {
     setState(() => _isLoading = true);
     final service = GoogleDriveService();
     await service.signOut();
+    if (!mounted) return;
+    final storageService = Provider.of<StorageService>(context, listen: false);
+    await storageService.saveSetting('google_signed_in', false);
+    if (!mounted) return;
     setState(() {
       _isSignedIn = false;
       _status = 'Signed out.';

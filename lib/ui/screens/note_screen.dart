@@ -98,6 +98,9 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
       curve: Curves.easeIn,
     );
 
+    // Start content animation immediately
+    _contentAnimationController.forward();
+
     // Initialize the editor content after a short delay
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeEditor();
@@ -132,7 +135,6 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
       setState(() {
         _isContentLoaded = true;
       });
-      _contentAnimationController.forward();
     }
   }
 
@@ -750,232 +752,236 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
             ),
           ],
         ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Image display if available
-                  if (_imagePaths.isNotEmpty) _buildImagePreview(),
+        body: Hero(
+          tag: 'note-${_note.id}',
+          child: Material(
+            color: theme.colorScheme.surface,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Image display if available
+                    if (_imagePaths.isNotEmpty) _buildImagePreview(),
 
-                  // Audio player if available
-                  if (_note.audioPath != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12.0),
-                      child: _buildAudioPlayer(_note.audioPath!),
-                    ),
+                    // Audio player if available
+                    if (_note.audioPath != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: _buildAudioPlayer(_note.audioPath!),
+                      ),
 
-                  // Title
-                  TextField(
-                    controller: _titleController,
-                    maxLines: null,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: titleTextColor,
-                      fontFamily: 'Nunito',
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Title',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: borderColor!,
-                          width: 2,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: borderColor,
-                          width: 2,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: borderColor,
-                          width: 2.5,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      hintStyle: TextStyle(
-                        color: titleTextColor.withAlpha((0.6 * 255).toInt()),
-                        fontFamily: 'Nunito',
-                      ),
-                      filled: false,
-                    ),
-                  ),
-
-                  // Date
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text(
-                      'Edited ${_note.modifiedAt.toString().substring(0, 16)}',
+                    // Title
+                    TextField(
+                      controller: _titleController,
+                      maxLines: null,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
                         color: titleTextColor,
                         fontFamily: 'Nunito',
                       ),
-                    ),
-                  ),
-
-                  // Tags
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Wrap(
-                      spacing: 8.0,
-                      runSpacing: 4.0,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        // Add Tag Button (icon only, peach color, rounded)
-                        GestureDetector(
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => _buildAddTagDialog(),
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black,
-                                  blurRadius: 2,
-                                  offset: const Offset(0, 1),
-                                ),
-                              ],
-                            ),
-                            child: Icon(Icons.label,
-                                size: 18, color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Title',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: borderColor!,
+                            width: 2,
                           ),
                         ),
-                        // All tags
-                        ..._tags.map((tag) {
-                          final isNewTag = _tagAdded && tag == _tags.last;
-                          final chip = Chip(
-                            label: Text(
-                              tag,
-                              style: TextStyle(
-                                color: titleTextColor,
-                                fontFamily: 'Nunito',
-                              ),
-                            ),
-                            backgroundColor: theme.colorScheme.secondary,
-                            deleteIcon: Icon(
-                              Icons.close,
-                              size: 18,
-                              color:
-                                  titleTextColor.withAlpha((0.7 * 255).toInt()),
-                            ),
-                            onDeleted: () {
-                              setState(() {
-                                _tags.remove(tag);
-                                _hasChanges = true;
-                              });
-                            },
-                          );
-                          if (isNewTag) {
-                            return ScaleTransition(
-                              scale: _tagAnimation,
-                              child: chip,
-                            );
-                          }
-                          return chip;
-                        }),
-                      ],
-                    ),
-                  ),
-
-                  // Quill toolbar and RTL toggle in a row
-                  Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black,
-                          blurRadius: 2,
-                          offset: const Offset(0, 1),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: borderColor,
+                            width: 2,
+                          ),
                         ),
-                      ],
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: borderColor,
+                            width: 2.5,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        hintStyle: TextStyle(
+                          color: titleTextColor.withAlpha((0.6 * 255).toInt()),
+                          fontFamily: 'Nunito',
+                        ),
+                        filled: false,
+                      ),
                     ),
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
+
+                    // Date
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        'Edited ${_note.modifiedAt.toString().substring(0, 16)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: titleTextColor,
+                          fontFamily: 'Nunito',
+                        ),
+                      ),
+                    ),
+
+                    // Tags
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Wrap(
+                        spacing: 8.0,
+                        runSpacing: 4.0,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          quill.QuillSimpleToolbar(
-                            controller: _quillController,
-                            config: quill.QuillSimpleToolbarConfig(
-                              showSubscript: false,
-                              showSuperscript: false,
-                              showIndent: false,
-                              showDirection: false,
-                              showFontFamily: false,
-                              showAlignmentButtons: true,
+                          // Add Tag Button (icon only, peach color, rounded)
+                          GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => _buildAddTagDialog(),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black,
+                                    blurRadius: 2,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(Icons.label,
+                                  size: 18, color: Colors.white),
                             ),
                           ),
+                          // All tags
+                          ..._tags.map((tag) {
+                            final isNewTag = _tagAdded && tag == _tags.last;
+                            final chip = Chip(
+                              label: Text(
+                                tag,
+                                style: TextStyle(
+                                  color: titleTextColor,
+                                  fontFamily: 'Nunito',
+                                ),
+                              ),
+                              backgroundColor: theme.colorScheme.secondary,
+                              deleteIcon: Icon(
+                                Icons.close,
+                                size: 18,
+                                color: titleTextColor
+                                    .withAlpha((0.7 * 255).toInt()),
+                              ),
+                              onDeleted: () {
+                                setState(() {
+                                  _tags.remove(tag);
+                                  _hasChanges = true;
+                                });
+                              },
+                            );
+                            if (isNewTag) {
+                              return ScaleTransition(
+                                scale: _tagAnimation,
+                                child: chip,
+                              );
+                            }
+                            return chip;
+                          }),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
 
-                  // Editor area with loading state
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: borderColor,
+                    // Quill toolbar and RTL toggle in a row
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: BoxDecoration(
+                        color: theme.cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black,
+                            blurRadius: 2,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 4, horizontal: 8),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            quill.QuillSimpleToolbar(
+                              controller: _quillController,
+                              config: quill.QuillSimpleToolbarConfig(
+                                showSubscript: false,
+                                showSuperscript: false,
+                                showIndent: false,
+                                showDirection: false,
+                                showFontFamily: false,
+                                showAlignmentButtons: true,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    constraints: BoxConstraints(
-                      minHeight: MediaQuery.of(context).size.height * 0.6,
-                    ),
-                    child: Stack(
-                      children: [
-                        // Editor
-                        FadeTransition(
-                          opacity: _contentAnimation,
-                          child: Directionality(
-                            textDirection: _textDirection,
-                            child: quill.QuillEditor(
-                              controller: _quillController,
-                              scrollController: _scrollController,
-                              focusNode: _editorFocusNode,
-                              config: quill.QuillEditorConfig(
-                                placeholder: 'Write your note...',
-                                padding: const EdgeInsets.all(16),
-                                autoFocus: false,
-                                expands: false,
-                                scrollable: true,
+                    const SizedBox(height: 8),
+
+                    // Editor area with loading state
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: borderColor,
+                        ),
+                      ),
+                      constraints: BoxConstraints(
+                        minHeight: MediaQuery.of(context).size.height * 0.6,
+                      ),
+                      child: Stack(
+                        children: [
+                          // Editor
+                          FadeTransition(
+                            opacity: _contentAnimation,
+                            child: Directionality(
+                              textDirection: _textDirection,
+                              child: quill.QuillEditor(
+                                controller: _quillController,
+                                scrollController: _scrollController,
+                                focusNode: _editorFocusNode,
+                                config: quill.QuillEditorConfig(
+                                  placeholder: 'Write your note...',
+                                  padding: const EdgeInsets.all(16),
+                                  autoFocus: false,
+                                  expands: false,
+                                  scrollable: true,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        // Loading indicator overlay
-                        if (!_isContentLoaded)
-                          Container(
-                            color: theme.colorScheme.surface
-                                .withAlpha((0.7 * 255).toInt()),
-                            child: const Center(
-                              child: CircularProgressIndicator(),
+                          // Loading indicator overlay - only show if content is not loaded and note has content
+                          if (!_isContentLoaded && _note.content.isNotEmpty)
+                            Container(
+                              color: theme.colorScheme.surface
+                                  .withAlpha((0.7 * 255).toInt()),
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

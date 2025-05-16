@@ -10,8 +10,8 @@ import 'services/image_service.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'providers/theme_provider.dart';
-import 'services/google_drive_service.dart';
 import 'ui/screens/splash_screen.dart';
+import 'services/google_drive_service.dart';
 
 // Add enum for theme modes
 enum AppThemeMode { system, comfyLight, comfyDark }
@@ -113,6 +113,16 @@ void main() async {
   final storageService = StorageService();
   await storageService.init();
 
+  // Initialize critical services before runApp
+  await ImageService.init();
+
+  // Persistent Google sign-in if user previously signed in
+  final googleSignedIn =
+      storageService.getSetting('google_signed_in', defaultValue: false);
+  if (googleSignedIn == true) {
+    await GoogleDriveService().signInSilently();
+  }
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
@@ -134,13 +144,11 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   AppThemeMode _themeMode = AppThemeMode.system;
-  bool _showHome = false;
 
   @override
   void initState() {
     super.initState();
     _loadThemeMode();
-    _init();
   }
 
   void _loadThemeMode() {
@@ -161,21 +169,6 @@ class _MyAppState extends State<MyApp> {
           break;
       }
     });
-  }
-
-  Future<void> _init() async {
-    final start = DateTime.now();
-    await ImageService.init();
-    await GoogleDriveService().signIn();
-    final elapsed = DateTime.now().difference(start);
-    if (elapsed < const Duration(milliseconds: 2000)) {
-      await Future.delayed(const Duration(milliseconds: 2000) - elapsed);
-    }
-    if (mounted) {
-      setState(() {
-        _showHome = true;
-      });
-    }
   }
 
   @override
@@ -205,7 +198,7 @@ class _MyAppState extends State<MyApp> {
                 },
                 theme: comfyLightTheme,
                 darkTheme: comfyDarkTheme,
-                home: _showHome ? const HomeScreen() : const SplashScreen(),
+                home: const SplashScreen(),
                 routes: {
                   '/settings': (context) => const SettingsScreen(),
                   '/privacy': (context) => const PrivacyPolicyScreen(),

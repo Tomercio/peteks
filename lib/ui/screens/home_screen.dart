@@ -11,7 +11,6 @@ import 'settings_screen.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'package:pattern_lock/pattern_lock.dart';
-import '../../services/google_drive_service.dart';
 
 enum ViewMode { grid, list }
 
@@ -45,9 +44,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-
-    // Ensure Google login is restored on app startup
-    Future.microtask(() => GoogleDriveService().signIn());
 
     // Initialize tag animation controller
     _tagController = AnimationController(
@@ -188,10 +184,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (mounted) {
       await Navigator.push(
         context,
-        MaterialPageRoute(
-          settings: const RouteSettings(name: '/note'),
-          builder: (context) => NoteScreen(note: note),
-        ),
+        MaterialPageRoute(builder: (context) => NoteScreen(note: note)),
       );
       if (!mounted) return;
       setState(() {
@@ -250,10 +243,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  settings: const RouteSettings(name: '/search'),
-                  builder: (context) => const SearchScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => const SearchScreen()),
               );
             },
           ),
@@ -264,16 +254,17 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               final themeService =
                   Provider.of<ThemeService>(context, listen: false);
               final result = await Navigator.of(context).push(
-                MaterialPageRoute(
-                  settings: const RouteSettings(name: '/settings'),
-                  builder: (context) => ChangeNotifierProvider.value(
+                slideRoute(
+                  ChangeNotifierProvider.value(
                     value: themeService,
                     child: const SettingsScreen(),
                   ),
                 ),
               );
               if (result == true) {
-                setState(() {}); // Rebuild to update greeting
+                setState(() {
+                  _loadNotes();
+                });
               }
             },
             tooltip: 'Settings',
@@ -398,115 +389,116 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       },
       itemBuilder: (context, index) {
         final note = _filteredNotes[index];
-        return NoteCard(
+        return Hero(
           key: ValueKey(note.id),
-          note: note,
-          onTap: () async {
-            bool unlocked = true;
-            if (note.isSecure) {
-              unlocked = false;
-              if (note.securityType == 'password') {
-                unlocked = await showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (context) {
-                        final TextEditingController pass =
-                            TextEditingController();
-                        return AlertDialog(
-                          title: const Text('Enter Password'),
-                          content: TextField(
-                            controller: pass,
-                            obscureText: true,
-                            decoration:
-                                const InputDecoration(labelText: 'Password'),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text('Cancel'),
+          tag: 'note-${note.id}',
+          child: NoteCard(
+            note: note,
+            onTap: () async {
+              bool unlocked = true;
+              if (note.isSecure) {
+                unlocked = false;
+                if (note.securityType == 'password') {
+                  unlocked = await showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) {
+                          final TextEditingController pass =
+                              TextEditingController();
+                          return AlertDialog(
+                            title: const Text('Enter Password'),
+                            content: TextField(
+                              controller: pass,
+                              obscureText: true,
+                              decoration:
+                                  const InputDecoration(labelText: 'Password'),
                             ),
-                            TextButton(
-                              onPressed: () {
-                                final hash = sha256
-                                    .convert(utf8.encode(pass.text))
-                                    .toString();
-                                if (hash == note.securityHash) {
-                                  Navigator.of(context).pop(true);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Incorrect password')),
-                                  );
-                                }
-                              },
-                              child: const Text('Unlock'),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  final hash = sha256
+                                      .convert(utf8.encode(pass.text))
+                                      .toString();
+                                  if (hash == note.securityHash) {
+                                    Navigator.of(context).pop(true);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text('Incorrect password')),
+                                    );
+                                  }
+                                },
+                                child: const Text('Unlock'),
+                              ),
+                            ],
+                          );
+                        },
+                      ) ??
+                      false;
+                } else if (note.securityType == 'pattern') {
+                  unlocked = await showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Enter Pattern'),
+                            content: SizedBox(
+                              width: 250,
+                              height: 300,
+                              child: PatternLock(
+                                selectedColor:
+                                    Theme.of(context).colorScheme.primary,
+                                notSelectedColor: Colors.grey,
+                                pointRadius: 10,
+                                showInput: true,
+                                dimension: 3,
+                                onInputComplete: (List<int> input) {
+                                  final hash = sha256
+                                      .convert(utf8.encode(input.join('-')))
+                                      .toString();
+                                  if (hash == note.securityHash) {
+                                    Navigator.of(context).pop(true);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text('Incorrect pattern')),
+                                    );
+                                  }
+                                },
+                              ),
                             ),
-                          ],
-                        );
-                      },
-                    ) ??
-                    false;
-              } else if (note.securityType == 'pattern') {
-                unlocked = await showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text('Enter Pattern'),
-                          content: SizedBox(
-                            width: 250,
-                            height: 300,
-                            child: PatternLock(
-                              selectedColor:
-                                  Theme.of(context).colorScheme.primary,
-                              notSelectedColor: Colors.grey,
-                              pointRadius: 10,
-                              showInput: true,
-                              dimension: 3,
-                              onInputComplete: (List<int> input) {
-                                final hash = sha256
-                                    .convert(utf8.encode(input.join('-')))
-                                    .toString();
-                                if (hash == note.securityHash) {
-                                  Navigator.of(context).pop(true);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Incorrect pattern')),
-                                  );
-                                }
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ) ??
-                    false;
+                          );
+                        },
+                      ) ??
+                      false;
+                }
               }
-            }
-            if (!unlocked) return;
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                settings: const RouteSettings(name: '/note'),
-                builder: (context) => NoteScreen(note: note),
-              ),
-            );
-            if (!mounted) return;
-            setState(() {
-              _loadNotes();
-            });
-          },
-          onFavoriteToggle: () {
-            setState(() {
-              final updatedNote = note.copyWith(
-                isFavorite: !note.isFavorite,
+              if (!unlocked) return;
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NoteScreen(note: note)),
               );
-              _storageService.saveNote(updatedNote);
-              _loadNotes();
-            });
-          },
-          mode: NoteCardMode.list,
+              if (!mounted) return;
+              setState(() {
+                _loadNotes();
+              });
+            },
+            onFavoriteToggle: () {
+              setState(() {
+                final updatedNote = note.copyWith(
+                  isFavorite: !note.isFavorite,
+                );
+                _storageService.saveNote(updatedNote);
+                _loadNotes();
+              });
+            },
+            mode: NoteCardMode.list,
+          ),
         );
       },
     );
@@ -556,115 +548,116 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       },
       itemBuilder: (context, index) {
         final note = _filteredNotes[index];
-        return NoteCard(
+        return Hero(
           key: ValueKey(note.id),
-          note: note,
-          onTap: () async {
-            bool unlocked = true;
-            if (note.isSecure) {
-              unlocked = false;
-              if (note.securityType == 'password') {
-                unlocked = await showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (context) {
-                        final TextEditingController pass =
-                            TextEditingController();
-                        return AlertDialog(
-                          title: const Text('Enter Password'),
-                          content: TextField(
-                            controller: pass,
-                            obscureText: true,
-                            decoration:
-                                const InputDecoration(labelText: 'Password'),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text('Cancel'),
+          tag: 'note-${note.id}',
+          child: NoteCard(
+            note: note,
+            onTap: () async {
+              bool unlocked = true;
+              if (note.isSecure) {
+                unlocked = false;
+                if (note.securityType == 'password') {
+                  unlocked = await showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) {
+                          final TextEditingController pass =
+                              TextEditingController();
+                          return AlertDialog(
+                            title: const Text('Enter Password'),
+                            content: TextField(
+                              controller: pass,
+                              obscureText: true,
+                              decoration:
+                                  const InputDecoration(labelText: 'Password'),
                             ),
-                            TextButton(
-                              onPressed: () {
-                                final hash = sha256
-                                    .convert(utf8.encode(pass.text))
-                                    .toString();
-                                if (hash == note.securityHash) {
-                                  Navigator.of(context).pop(true);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Incorrect password')),
-                                  );
-                                }
-                              },
-                              child: const Text('Unlock'),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  final hash = sha256
+                                      .convert(utf8.encode(pass.text))
+                                      .toString();
+                                  if (hash == note.securityHash) {
+                                    Navigator.of(context).pop(true);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text('Incorrect password')),
+                                    );
+                                  }
+                                },
+                                child: const Text('Unlock'),
+                              ),
+                            ],
+                          );
+                        },
+                      ) ??
+                      false;
+                } else if (note.securityType == 'pattern') {
+                  unlocked = await showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Enter Pattern'),
+                            content: SizedBox(
+                              width: 250,
+                              height: 300,
+                              child: PatternLock(
+                                selectedColor:
+                                    Theme.of(context).colorScheme.primary,
+                                notSelectedColor: Colors.grey,
+                                pointRadius: 10,
+                                showInput: true,
+                                dimension: 3,
+                                onInputComplete: (List<int> input) {
+                                  final hash = sha256
+                                      .convert(utf8.encode(input.join('-')))
+                                      .toString();
+                                  if (hash == note.securityHash) {
+                                    Navigator.of(context).pop(true);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text('Incorrect pattern')),
+                                    );
+                                  }
+                                },
+                              ),
                             ),
-                          ],
-                        );
-                      },
-                    ) ??
-                    false;
-              } else if (note.securityType == 'pattern') {
-                unlocked = await showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text('Enter Pattern'),
-                          content: SizedBox(
-                            width: 250,
-                            height: 300,
-                            child: PatternLock(
-                              selectedColor:
-                                  Theme.of(context).colorScheme.primary,
-                              notSelectedColor: Colors.grey,
-                              pointRadius: 10,
-                              showInput: true,
-                              dimension: 3,
-                              onInputComplete: (List<int> input) {
-                                final hash = sha256
-                                    .convert(utf8.encode(input.join('-')))
-                                    .toString();
-                                if (hash == note.securityHash) {
-                                  Navigator.of(context).pop(true);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Incorrect pattern')),
-                                  );
-                                }
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ) ??
-                    false;
+                          );
+                        },
+                      ) ??
+                      false;
+                }
               }
-            }
-            if (!unlocked) return;
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                settings: const RouteSettings(name: '/note'),
-                builder: (context) => NoteScreen(note: note),
-              ),
-            );
-            if (!mounted) return;
-            setState(() {
-              _loadNotes();
-            });
-          },
-          onFavoriteToggle: () {
-            setState(() {
-              final updatedNote = note.copyWith(
-                isFavorite: !note.isFavorite,
+              if (!unlocked) return;
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NoteScreen(note: note)),
               );
-              _storageService.saveNote(updatedNote);
-              _loadNotes();
-            });
-          },
-          mode: NoteCardMode.grid,
+              if (!mounted) return;
+              setState(() {
+                _loadNotes();
+              });
+            },
+            onFavoriteToggle: () {
+              setState(() {
+                final updatedNote = note.copyWith(
+                  isFavorite: !note.isFavorite,
+                );
+                _storageService.saveNote(updatedNote);
+                _loadNotes();
+              });
+            },
+            mode: NoteCardMode.grid,
+          ),
         );
       },
     );
@@ -742,6 +735,22 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ],
         ),
       ),
+    );
+  }
+
+  // Helper for slide transition
+  PageRouteBuilder<T> slideRoute<T>(Widget page) {
+    return PageRouteBuilder<T>(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset.zero;
+        const curve = Curves.easeInOut;
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
+        return SlideTransition(position: offsetAnimation, child: child);
+      },
     );
   }
 }

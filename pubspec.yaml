@@ -74,6 +74,7 @@ dev_dependencies:
   build_runner: ^2.4.6
 
   flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.3.2
 
 flutter_icons:
   android: true           # ייצור גם adaptive icons
@@ -131,3 +132,11 @@ flutter:
         - asset: assets/fonts/Nunito/Nunito-ExtraLightItalic.ttf
           weight: 200
           style: italic
+
+flutter_native_splash:
+  color: "#FFF7ED"                # Match your app's splash background
+  image: assets/peteks.png        # Your splash logo (adjust path if needed)
+  android: true
+  ios: true
+  android_gravity: center
+  fullscreen: true

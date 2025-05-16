@@ -54,6 +54,21 @@ class GoogleDriveService {
     }
   }
 
+  Future<bool> signInSilently() async {
+    try {
+      _currentUser = await _googleSignIn.signInSilently();
+      if (_currentUser == null) return false;
+      _auth = await _currentUser!.authentication;
+      if (_auth?.accessToken == null) return false;
+      final client = _GoogleAuthClient(_auth!.accessToken!);
+      _driveApi = drive.DriveApi(client);
+      await getOrCreateNotesFolder();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<void> signOut() async {
     try {
       await _googleSignIn.signOut();
