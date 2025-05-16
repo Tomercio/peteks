@@ -11,6 +11,7 @@ import 'settings_screen.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'package:pattern_lock/pattern_lock.dart';
+import 'calendar_screen.dart';
 
 enum ViewMode { grid, list }
 
@@ -223,7 +224,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         ),
         actions: [
-          // View mode toggle (move before favorites)
+          // View mode toggle (furthest left)
           IconButton(
             icon: Icon(
                 _viewMode == ViewMode.grid ? Icons.view_list : Icons.grid_view),
@@ -237,7 +238,18 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             onPressed: _toggleFavoritesFilter,
             tooltip: 'Show favorites',
           ),
-          // Search button
+          // Calendar button (middle right)
+          IconButton(
+            icon: const Icon(Icons.calendar_today),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CalendarScreen()),
+              );
+            },
+            tooltip: 'Calendar',
+          ),
+          // Search button (second from right)
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -247,7 +259,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               );
             },
           ),
-          // Settings with proper provider approach
+          // Settings with proper provider approach (furthest right)
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () async {
