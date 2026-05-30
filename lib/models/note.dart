@@ -117,6 +117,7 @@ class Note extends HiveObject {
     String? securityHash,
     String? securitySalt,
     String? folderId,
+    bool clearFolderId = false,
   }) {
     return Note(
       id: id,
@@ -138,7 +139,7 @@ class Note extends HiveObject {
       securityType: securityType ?? this.securityType,
       securityHash: securityHash ?? this.securityHash,
       securitySalt: securitySalt ?? this.securitySalt,
-      folderId: folderId ?? this.folderId,
+      folderId: clearFolderId ? null : (folderId ?? this.folderId),
     );
   }
 

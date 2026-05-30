@@ -296,6 +296,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _showLongPressMenu(Note note) {
+    final folders = _storageService.getFolders();
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -327,6 +328,16 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ),
             const Divider(),
+            // Move to folder
+            ListTile(
+              leading: const Icon(Icons.drive_file_move_outline),
+              title: const Text('Move to Folder',
+                  style: TextStyle(fontFamily: 'Nunito')),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _showMoveFolderDialog(note, folders);
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.delete_outline, color: Colors.red),
               title: const Text('Delete',
@@ -336,6 +347,72 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 _deleteNoteInstantly(note);
               },
             ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMoveFolderDialog(Note note, List<Folder> folders) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.withAlpha(80),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Text(
+                'Move to Folder',
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontFamily: 'Nunito'),
+              ),
+            ),
+            const Divider(),
+            // "No folder" option
+            ListTile(
+              leading: const Icon(Icons.inbox_outlined),
+              title: const Text('All Notes (no folder)',
+                  style: TextStyle(fontFamily: 'Nunito')),
+              trailing: note.folderId == null
+                  ? const Icon(Icons.check, size: 18)
+                  : null,
+              onTap: () async {
+                Navigator.of(ctx).pop();
+                final updated = note.copyWith(folderId: null, clearFolderId: true);
+                await _storageService.saveNote(updated);
+                setState(() => _loadNotes());
+              },
+            ),
+            ...folders.map((folder) => ListTile(
+                  leading: Icon(folder.icon, color: folder.color),
+                  title: Text(folder.name,
+                      style: const TextStyle(fontFamily: 'Nunito')),
+                  trailing: note.folderId == folder.id
+                      ? const Icon(Icons.check, size: 18)
+                      : null,
+                  onTap: () async {
+                    Navigator.of(ctx).pop();
+                    final updated = note.copyWith(folderId: folder.id);
+                    await _storageService.saveNote(updated);
+                    setState(() => _loadNotes());
+                  },
+                )),
             const SizedBox(height: 8),
           ],
         ),
@@ -1046,6 +1123,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             child: ChoiceChip(
               label: const Text('All Notes'),
               selected: _selectedFolderId == null,
+              showCheckmark: false,
               onSelected: (_) {
                 setState(() {
                   _selectedFolderId = null;
@@ -1060,6 +1138,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   avatar: Icon(folder.icon, size: 16, color: folder.color),
                   label: Text(folder.name),
                   selected: _selectedFolderId == folder.id,
+                  showCheckmark: false,
                   onSelected: (_) {
                     setState(() {
                       _selectedFolderId =
@@ -1069,13 +1148,13 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   },
                 ),
               )),
-          // Add-folder button
+          // Add-folder button — icon only
           Padding(
             padding: const EdgeInsets.only(right: 4, top: 6, bottom: 6),
             child: ActionChip(
-              avatar: const Icon(Icons.create_new_folder_outlined, size: 16),
-              label: const Text('New Folder'),
+              label: const Icon(Icons.create_new_folder_outlined, size: 18),
               onPressed: () => _showFolderDialog(null),
+              tooltip: 'New Folder',
             ),
           ),
         ],
