@@ -248,6 +248,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       title: '',
       content: '',
       position: maxPosition,
+      folderId: _selectedFolderId, // inherit current folder filter
     );
 
     if (mounted) {
@@ -614,8 +615,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
-              _buildFolderBar(),
-              if (_notes.isNotEmpty) _buildTagsBar(),
+              _buildFiltersBar(),
 
               // Notes display - Grid or List
               Expanded(
@@ -1110,40 +1110,92 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildFolderBar() {
+  Widget _buildFiltersBar() {
     final folders = _storageService.getFolders();
-    return SizedBox(
-      height: 44,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        children: [
-          ...folders.map((folder) => Padding(
-                padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
-                child: ChoiceChip(
-                  avatar: Icon(folder.icon, size: 16, color: folder.color),
-                  label: Text(folder.name),
-                  selected: _selectedFolderId == folder.id,
-                  showCheckmark: false,
-                  onSelected: (_) {
-                    setState(() {
-                      _selectedFolderId =
-                          _selectedFolderId == folder.id ? null : folder.id;
-                      _applyFilters();
-                    });
-                  },
-                ),
-              )),
-          // Add-folder button — icon only
-          Padding(
-            padding: const EdgeInsets.only(right: 4, top: 6, bottom: 6),
-            child: ActionChip(
-              label: const Icon(Icons.create_new_folder_outlined, size: 18),
-              onPressed: () => _showFolderDialog(null),
-              tooltip: 'New Folder',
+
+    // Collect tags
+    final Set<String> tags = {};
+    for (final note in _notes) {
+      if (_showOnlySecured) {
+        if (note.isSecure) tags.addAll(note.tags);
+      } else {
+        if (!note.isSecure) tags.addAll(note.tags);
+      }
+    }
+
+    return FadeTransition(
+      opacity: _tagAnimation,
+      child: SizedBox(
+        height: 48,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          children: [
+            // All — folder filter
+            Padding(
+              padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
+              child: ChoiceChip(
+                label: const Text('All'),
+                selected: _selectedFolderId == null,
+                showCheckmark: false,
+                onSelected: (_) {
+                  setState(() {
+                    _selectedFolderId = null;
+                    _applyFilters();
+                  });
+                },
+              ),
             ),
-          ),
-        ],
+            // Folder chips
+            ...folders.map((folder) => Padding(
+                  padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
+                  child: ChoiceChip(
+                    avatar: Icon(folder.icon, size: 16, color: folder.color),
+                    label: Text(folder.name),
+                    selected: _selectedFolderId == folder.id,
+                    showCheckmark: false,
+                    onSelected: (_) {
+                      setState(() {
+                        _selectedFolderId =
+                            _selectedFolderId == folder.id ? null : folder.id;
+                        _applyFilters();
+                      });
+                    },
+                  ),
+                )),
+            // New folder button — icon only
+            Padding(
+              padding: const EdgeInsets.only(right: 12, top: 6, bottom: 6),
+              child: ActionChip(
+                label: const Icon(Icons.create_new_folder_outlined, size: 18),
+                onPressed: () => _showFolderDialog(null),
+                tooltip: 'New Folder',
+              ),
+            ),
+            // Divider visual between folders and tags
+            if (_notes.isNotEmpty && tags.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(right: 12, top: 10, bottom: 10),
+                child: VerticalDivider(
+                  width: 1,
+                  color: Colors.grey.withAlpha(80),
+                ),
+              ),
+            // Tag chips
+            if (_notes.isNotEmpty)
+              ...tags.map((tag) => Padding(
+                    padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
+                    child: FilterChip(
+                      label: Text(tag),
+                      selected: _selectedTag == tag,
+                      showCheckmark: false,
+                      onSelected: (selected) {
+                        _selectTag(selected ? tag : null);
+                      },
+                    ),
+                  )),
+          ],
+        ),
       ),
     );
   }
@@ -1202,80 +1254,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTagsBar() {
-    // Get all unique tags
-    final Set<String> tags = {};
-    for (final note in _notes) {
-      // Only include tags from non-secure notes unless secret filter is active
-      if (_showOnlySecured) {
-        if (note.isSecure) tags.addAll(note.tags);
-      } else {
-        if (!note.isSecure) tags.addAll(note.tags);
-      }
-    }
-
-    return FadeTransition(
-      opacity: _tagAnimation,
-      child: Container(
-        height: 50,
-        margin: const EdgeInsets.only(top: 8),
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          children: [
-            // "All" tag option (always visible)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: FilterChip(
-                label: const Text('All'),
-                selected: _selectedTag == null,
-                onSelected: (selected) {
-                  if (selected) {
-                    _selectTag(null);
-                  }
-                },
-                avatar: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Icon(
-                      Icons.label_outline,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 20,
-                    ),
-                    if (_selectedTag == null)
-                      Icon(
-                        Icons.check,
-                        color: Theme.of(context).iconTheme.color,
-                        size: 14,
-                      ),
-                  ],
-                ),
-                showCheckmark: false,
-                labelStyle: Theme.of(context).chipTheme.labelStyle,
-                backgroundColor: Theme.of(context).chipTheme.backgroundColor,
-                elevation: 2,
-                pressElevation: 6,
-              ),
-            ),
-            // All other tags
-            if (tags.isNotEmpty)
-              ...tags.map((tag) => Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(tag),
-                      selected: _selectedTag == tag,
-                      onSelected: (selected) {
-                        _selectTag(selected ? tag : null);
-                      },
-                      elevation: 2,
-                      pressElevation: 6,
-                    ),
-                  )),
-          ],
-        ),
-      ),
-    );
-  }
 
   PopupMenuItem<String> _sortItem(String value, String label, IconData icon) {
     final selected = _sortMode == value;
