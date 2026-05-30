@@ -1118,20 +1118,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
-            child: ChoiceChip(
-              label: const Text('All'),
-              selected: _selectedFolderId == null,
-              showCheckmark: false,
-              onSelected: (_) {
-                setState(() {
-                  _selectedFolderId = null;
-                  _applyFilters();
-                });
-              },
-            ),
-          ),
           ...folders.map((folder) => Padding(
                 padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
                 child: ChoiceChip(
