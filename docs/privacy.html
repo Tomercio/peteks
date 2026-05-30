@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Peteks – Privacy Policy</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #1e1814; --bg2: #251f1a; --card: #332b24;
+      --coral: #e8856a; --text: #f0e8e0; --muted: #b0998a; --faint: #6b5a50;
+    }
+    body { font-family: -apple-system, 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; }
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px; background: rgba(30,24,20,0.95);
+      border-bottom: 1px solid rgba(232,133,106,0.1);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-size: 1.2rem; font-weight: 800; color: var(--coral); }
+    .nav-logo-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--coral); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+    .nav-back { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+    .nav-back:hover { color: var(--coral); }
+    .container { max-width: 780px; margin: 0 auto; padding: 60px 24px 100px; }
+    .badge { display: inline-block; background: rgba(232,133,106,0.12); border: 1px solid rgba(232,133,106,0.3); color: var(--coral); padding: 4px 14px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 16px; }
+    h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+    .meta { color: var(--faint); font-size: 0.85rem; margin-bottom: 12px; }
+    .intro { color: var(--muted); font-size: 1rem; margin-bottom: 48px; padding: 20px 24px; background: var(--card); border-radius: 14px; border-left: 3px solid var(--coral); }
+    .toc { background: var(--bg2); border-radius: 14px; padding: 24px 28px; margin-bottom: 48px; }
+    .toc h3 { font-size: 0.85rem; font-weight: 700; color: var(--coral); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+    .toc a:hover { color: var(--coral); }
+    .section { margin-bottom: 48px; }
+    .section h2 { font-size: 1.3rem; font-weight: 700; color: var(--coral); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid rgba(232,133,106,0.15); }
+    .section p { color: var(--muted); font-size: 0.95rem; margin-bottom: 14px; }
+    .section ul, .section ol { padding-left: 22px; margin-bottom: 14px; }
+    .section li { color: var(--muted); font-size: 0.95rem; margin-bottom: 8px; }
+    .section strong { color: var(--text); }
+    .section a { color: var(--coral); }
+    .highlight-box { background: var(--card); border-radius: 12px; padding: 18px 22px; margin: 16px 0; border: 1px solid rgba(232,133,106,0.1); }
+    .highlight-box p { margin: 0; }
+    .tag { display: inline-block; background: rgba(232,133,106,0.12); color: var(--coral); padding: 2px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; margin-right: 6px; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.88rem; }
+    th { background: var(--card); color: var(--coral); padding: 10px 14px; text-align: left; font-weight: 600; border-bottom: 1px solid rgba(232,133,106,0.2); }
+    td { padding: 10px 14px; color: var(--muted); border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    .rights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .right-card { background: var(--card); border-radius: 12px; padding: 16px 18px; border: 1px solid rgba(255,255,255,0.04); }
+    .right-card .icon { font-size: 1.4rem; margin-bottom: 8px; }
+    .right-card h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+    .right-card p { font-size: 0.82rem; color: var(--muted); margin: 0; }
+    .contact-box { background: linear-gradient(135deg, rgba(232,133,106,0.1), rgba(232,133,106,0.05)); border: 1px solid rgba(232,133,106,0.2); border-radius: 16px; padding: 28px 32px; text-align: center; margin-top: 48px; }
+    .contact-box h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
+    .contact-box p { color: var(--muted); margin-bottom: 16px; }
+    .contact-box a { color: var(--coral); font-weight: 600; text-decoration: none; font-size: 1rem; }
+    footer { text-align: center; padding: 32px; border-top: 1px solid rgba(255,255,255,0.05); color: var(--faint); font-size: 0.8rem; }
+    footer a { color: var(--faint); text-decoration: none; }
+    footer a:hover { color: var(--coral); }
+    @media (max-width: 600px) { nav { padding: 14px 16px; } .container { padding: 40px 16px 80px; } .rights-grid { grid-template-columns: 1fr; } h1 { font-size: 1.8rem; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">p</div>
+    peteks
+  </a>
+  <a href="/" class="nav-back">← Back to home</a>
+</nav>
+
+<div class="container">
+  <div class="badge">Legal</div>
+  <h1>Privacy Policy</h1>
+  <p class="meta">Last updated: May 30, 2026 · Effective: May 30, 2026</p>
+
+  <div class="intro">
+    <strong>Plain English summary:</strong> Peteks stores your notes on <em>your device only</em>. We don't sell your data, show you ads, or track what you write. The only data that ever leaves your device is (a) anonymous crash reports via Firebase, and (b) your notes if <em>you</em> choose to back them up to <em>your own</em> Google Drive.
+  </div>
+
+  <div class="toc">
+    <h3>Table of Contents</h3>
+    <ol>
+      <li><a href="#who">Who We Are</a></li>
+      <li><a href="#collect">What Data We Collect</a></li>
+      <li><a href="#nocollect">What We Do NOT Collect</a></li>
+      <li><a href="#howuse">How We Use Your Data</a></li>
+      <li><a href="#thirdparty">Third-Party Services</a></li>
+      <li><a href="#retention">Data Retention</a></li>
+      <li><a href="#security">Security</a></li>
+      <li><a href="#children">Children's Privacy</a></li>
+      <li><a href="#gdpr">Your Rights (GDPR – EU Users)</a></li>
+      <li><a href="#ccpa">Your Rights (CCPA – California Users)</a></li>
+      <li><a href="#changes">Changes to This Policy</a></li>
+      <li><a href="#contact">Contact Us</a></li>
+    </ol>
+  </div>
+
+  <!-- 1 -->
+  <div class="section" id="who">
+    <h2>1. Who We Are</h2>
+    <p>Peteks ("the App", "we", "us", "our") is a personal notes application developed and operated by <strong>Tomer (Peteks)</strong>, an individual developer based in <strong>Israel</strong>.</p>
+    <p>Contact: <a href="mailto:info@peteksapp.com">info@peteksapp.com</a> · <a href="https://peteksapp.com">peteksapp.com</a></p>
+    <p>For the purposes of the GDPR (EU General Data Protection Regulation), the data controller is the individual developer identified above.</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="section" id="collect">
+    <h2>2. What Data We Collect</h2>
+    <table>
+      <tr>
+        <th>Data Type</th>
+        <th>When</th>
+        <th>Purpose</th>
+        <th>Stored Where</th>
+      </tr>
+      <tr>
+        <td><strong>Notes & content</strong></td>
+        <td>When you create notes</td>
+        <td>Core app functionality</td>
+        <td>Your device only (Hive local DB)</td>
+      </tr>
+      <tr>
+        <td><strong>Google account name & email</strong></td>
+        <td>Only if you use Google Drive backup</td>
+        <td>Authentication with Google only</td>
+        <td>Not stored by us — processed by Google</td>
+      </tr>
+      <tr>
+        <td><strong>Google Drive files</strong></td>
+        <td>Only if you use backup feature</td>
+        <td>Store your note backups</td>
+        <td>Your personal Google Drive only</td>
+      </tr>
+      <tr>
+        <td><strong>Crash & diagnostic data</strong></td>
+        <td>When the app crashes</td>
+        <td>Fix bugs and improve stability</td>
+        <td>Firebase (Google) — anonymous</td>
+      </tr>
+      <tr>
+        <td><strong>Anonymous usage events</strong></td>
+        <td>While using the app</td>
+        <td>Understand which features are used</td>
+        <td>Firebase Analytics — no personal info</td>
+      </tr>
+    </table>
+    <div class="highlight-box">
+      <p>⚠️ <strong>Important:</strong> Firebase Analytics does NOT collect your notes content, your name, or any personally identifiable information. It only collects anonymous events like "user opened app" or "user created note" — with no way to trace them back to you.</p>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="section" id="nocollect">
+    <h2>3. What We Do NOT Collect</h2>
+    <ul>
+      <li>❌ We do <strong>not</strong> read, access, or store the content of your notes on our servers</li>
+      <li>❌ We do <strong>not</strong> collect your name, phone number, or address</li>
+      <li>❌ We do <strong>not</strong> collect your location data</li>
+      <li>❌ We do <strong>not</strong> access your contacts, camera, or microphone without your explicit permission</li>
+      <li>❌ We do <strong>not</strong> sell your data to any third party — ever</li>
+      <li>❌ We do <strong>not</strong> serve advertisements</li>
+      <li>❌ We do <strong>not</strong> use your data for profiling or targeted advertising</li>
+      <li>❌ We do <strong>not</strong> share your data with data brokers</li>
+    </ul>
+  </div>
+
+  <!-- 4 -->
+  <div class="section" id="howuse">
+    <h2>4. How We Use Your Data</h2>
+    <p>The limited data we collect is used exclusively for:</p>
+    <ul>
+      <li><strong>Providing the service</strong> — saving and displaying your notes on your device</li>
+      <li><strong>Cloud backup</strong> — if you choose to enable Google Drive sync</li>
+      <li><strong>Improving the app</strong> — anonymous crash reports help us fix bugs</li>
+      <li><strong>Understanding usage</strong> — anonymous analytics help us know which features to improve</li>
+    </ul>
+    <p>We will never use your data for any purpose beyond what is listed above.</p>
+    <p><strong>Legal basis (GDPR):</strong> Processing is based on <em>legitimate interests</em> (crash reporting, app improvement) and <em>contract performance</em> (providing the note-taking service you requested).</p>
+  </div>
+
+  <!-- 5 -->
+  <div class="section" id="thirdparty">
+    <h2>5. Third-Party Services</h2>
+    <p>The App uses the following third-party services. Each has its own privacy policy:</p>
+    <table>
+      <tr>
+        <th>Service</th>
+        <th>Purpose</th>
+        <th>Data Shared</th>
+        <th>Privacy Policy</th>
+      </tr>
+      <tr>
+        <td><strong>Firebase Analytics</strong> (Google)</td>
+        <td>Anonymous usage statistics</td>
+        <td>Anonymous events only — no personal data</td>
+        <td><a href="https://firebase.google.com/support/privacy" target="_blank">View →</a></td>
+      </tr>
+      <tr>
+        <td><strong>Firebase Crashlytics</strong> (Google)</td>
+        <td>Crash reporting</td>
+        <td>Device model, OS version, crash stack trace — no personal data</td>
+        <td><a href="https://firebase.google.com/support/privacy" target="_blank">View →</a></td>
+      </tr>
+      <tr>
+        <td><strong>Google Sign-In</strong></td>
+        <td>Authenticate with Google (optional)</td>
+        <td>Google account email (processed by Google, not stored by us)</td>
+        <td><a href="https://policies.google.com/privacy" target="_blank">View →</a></td>
+      </tr>
+      <tr>
+        <td><strong>Google Drive API</strong></td>
+        <td>Note backup (optional)</td>
+        <td>Your notes backup file — stored in your own Drive, not accessible to us</td>
+        <td><a href="https://policies.google.com/privacy" target="_blank">View →</a></td>
+      </tr>
+    </table>
+    <p>We do not integrate with any advertising networks, data brokers, or social media tracking services.</p>
+  </div>
+
+  <!-- 6 -->
+  <div class="section" id="retention">
+    <h2>6. Data Retention</h2>
+    <ul>
+      <li><strong>Notes data</strong> — stored on your device until you delete them or uninstall the app</li>
+      <li><strong>Google Drive backup</strong> — stored in your Google Drive until you delete it manually</li>
+      <li><strong>Crash & analytics data</strong> — retained by Firebase/Google for up to 90 days, then automatically deleted</li>
+      <li><strong>Google Sign-In tokens</strong> — retained on your device until you sign out from Settings</li>
+    </ul>
+    <p>You can delete all your data at any time by uninstalling the App. For Google Drive backup data, delete the "Peteks Notes" folder from your Google Drive manually.</p>
+  </div>
+
+  <!-- 7 -->
+  <div class="section" id="security">
+    <h2>7. Security</h2>
+    <p>We take the security of your data seriously:</p>
+    <ul>
+      <li><strong>Secure notes</strong> are protected using <strong>HMAC-SHA256 hashing</strong> with a unique per-note salt</li>
+      <li>Passwords and patterns are <strong>never stored in plain text</strong></li>
+      <li>All communication with Google Drive and Firebase uses <strong>HTTPS/TLS encryption</strong></li>
+      <li>We do not have access to your device or the notes stored on it</li>
+    </ul>
+    <div class="highlight-box">
+      <p>⚠️ <strong>Disclaimer:</strong> No method of electronic storage is 100% secure. While we use commercially acceptable means to protect your data, we cannot guarantee absolute security. We recommend enabling secure notes for sensitive information and keeping your device's OS up to date.</p>
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="section" id="children">
+    <h2>8. Children's Privacy</h2>
+    <p>Peteks is not directed at children under the age of <strong>13</strong> (or 16 in the EU under GDPR).</p>
+    <p>We do not knowingly collect personal information from children. If you are a parent or guardian and believe your child has provided us with personal information, please contact us at <a href="mailto:info@peteksapp.com">info@peteksapp.com</a> and we will take immediate steps to delete such information.</p>
+  </div>
+
+  <!-- 9 -->
+  <div class="section" id="gdpr">
+    <h2>9. Your Rights — GDPR (EU / EEA Users)</h2>
+    <p>If you are located in the European Union or European Economic Area, you have the following rights under the General Data Protection Regulation (GDPR):</p>
+    <div class="rights-grid">
+      <div class="right-card">
+        <div class="icon">📋</div>
+        <h4>Right to Access</h4>
+        <p>Request a copy of the personal data we hold about you.</p>
+      </div>
+      <div class="right-card">
+        <div class="icon">✏️</div>
+        <h4>Right to Rectification</h4>
+        <p>Request correction of inaccurate personal data.</p>
+      </div>
+      <div class="right-card">
+        <div class="icon">🗑️</div>
+        <h4>Right to Erasure</h4>
+        <p>Request deletion of your personal data ("right to be forgotten").</p>
+      </div>
+      <div class="right-card">
+        <div class="icon">⏸️</div>
+        <h4>Right to Restriction</h4>
+        <p>Request that we restrict processing of your data.</p>
+      </div>
+      <div class="right-card">
+        <div class="icon">📦</div>
+        <h4>Right to Portability</h4>
+        <p>Receive your data in a structured, machine-readable format.</p>
+      </div>
+      <div class="right-card">
+        <div class="icon">🚫</div>
+        <h4>Right to Object</h4>
+        <p>Object to processing based on legitimate interests.</p>
+      </div>
+    </div>
+    <p>To exercise any of these rights, contact us at <a href="mailto:info@peteksapp.com">info@peteksapp.com</a>. We will respond within <strong>30 days</strong>.</p>
+    <p>You also have the right to lodge a complaint with your local data protection authority.</p>
+    <p><strong>Note:</strong> Since most data is stored locally on your device, the most effective way to exercise your right to erasure is to uninstall the App and delete your Google Drive backup folder.</p>
+  </div>
+
+  <!-- 10 -->
+  <div class="section" id="ccpa">
+    <h2>10. Your Rights — CCPA (California Users)</h2>
+    <p>If you are a California resident, you have the following rights under the California Consumer Privacy Act (CCPA):</p>
+    <ul>
+      <li><strong>Right to Know</strong> — You have the right to know what personal information we collect, use, and share</li>
+      <li><strong>Right to Delete</strong> — You have the right to request deletion of your personal information</li>
+      <li><strong>Right to Opt-Out</strong> — You have the right to opt out of the sale of your personal information. <em>Note: We do not sell personal information.</em></li>
+      <li><strong>Right to Non-Discrimination</strong> — We will not discriminate against you for exercising any CCPA rights</li>
+    </ul>
+    <p>To exercise these rights, contact us at <a href="mailto:info@peteksapp.com">info@peteksapp.com</a>.</p>
+  </div>
+
+  <!-- 11 -->
+  <div class="section" id="changes">
+    <h2>11. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. When we do:</p>
+    <ul>
+      <li>The "Last updated" date at the top of this page will be revised</li>
+      <li>For significant changes, we will notify users via an in-app notice</li>
+      <li>Continued use of the App after changes constitutes acceptance of the new policy</li>
+    </ul>
+    <p>We encourage you to review this policy periodically.</p>
+  </div>
+
+  <!-- 12 -->
+  <div class="section" id="contact">
+    <h2>12. Contact Us</h2>
+    <p>If you have any questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact us:</p>
+  </div>
+
+  <div class="contact-box">
+    <h3>Questions about your privacy?</h3>
+    <p>We respond to all privacy requests within 30 days.</p>
+    <a href="mailto:info@peteksapp.com">info@peteksapp.com</a>
+    <br><br>
+    <a href="https://peteksapp.com" style="color:var(--muted);font-size:0.85rem;">peteksapp.com</a>
+  </div>
+</div>
+
+<footer>
+  <a href="/">← Back to Peteks</a> &nbsp;·&nbsp;
+  © 2026 Peteks &nbsp;·&nbsp;
+  <a href="mailto:info@peteksapp.com">info@peteksapp.com</a>
+</footer>
+
+</body>
+</html>
