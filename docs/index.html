@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Peteks — Your Personal Notes App</title>
+  <meta name="description" content="Peteks is a beautiful, secure, and private notes app. Rich text editor, folders, Google Drive backup, and a secret secure vault. Available on Android.">
+  <meta property="og:title" content="Peteks — Your Personal Notes App">
+  <meta property="og:description" content="Beautiful notes. Totally private. Available on Google Play.">
+  <meta property="og:image" content="https://tomercio.github.io/peteks/store_assets/feature_graphic.png">
+  <meta property="og:url" content="https://peteksapp.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #1e1814;
+      --bg2:      #251f1a;
+      --bg3:      #2e2620;
+      --card:     #332b24;
+      --coral:    #e8856a;
+      --coral2:   #f09a82;
+      --text:     #f0e8e0;
+      --muted:    #b0998a;
+      --faint:    #6b5a50;
+      --radius:   18px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px;
+      background: rgba(30,24,20,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(232,133,106,0.1);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 1.4rem; font-weight: 800; color: var(--coral);
+      text-decoration: none;
+    }
+    .nav-logo-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: var(--coral);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 800; color: #fff;
+    }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: 0.9rem;
+      font-weight: 500; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--coral); }
+    .nav-cta {
+      background: var(--coral); color: #fff;
+      padding: 10px 22px; border-radius: 50px;
+      text-decoration: none; font-weight: 600; font-size: 0.9rem;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .nav-cta:hover { background: var(--coral2); transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative; overflow: hidden;
+    }
+    .hero-blob {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15;
+    }
+    .hero-blob-1 { width: 500px; height: 500px; background: var(--coral); top: -100px; left: -150px; }
+    .hero-blob-2 { width: 400px; height: 400px; background: #c0623e; bottom: -80px; right: -100px; }
+
+    .hero-inner { position: relative; max-width: 700px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(232,133,106,0.12); border: 1px solid rgba(232,133,106,0.3);
+      color: var(--coral); padding: 6px 16px; border-radius: 50px;
+      font-size: 0.82rem; font-weight: 600; margin-bottom: 28px;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--coral); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.4)} }
+
+    .hero h1 {
+      font-size: clamp(2.8rem, 7vw, 5rem);
+      font-weight: 800; line-height: 1.1;
+      margin-bottom: 24px; letter-spacing: -0.02em;
+    }
+    .hero h1 span { color: var(--coral); }
+    .hero p {
+      font-size: 1.2rem; color: var(--muted); max-width: 500px;
+      margin: 0 auto 40px; font-weight: 400;
+    }
+    .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+    .btn-play {
+      display: inline-flex; align-items: center; gap: 12px;
+      background: var(--coral); color: #fff;
+      padding: 16px 32px; border-radius: 50px;
+      text-decoration: none; font-weight: 700; font-size: 1rem;
+      transition: all 0.2s; box-shadow: 0 8px 30px rgba(232,133,106,0.35);
+    }
+    .btn-play:hover { background: var(--coral2); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(232,133,106,0.45); }
+    .btn-play svg { width: 22px; height: 22px; }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 10px;
+      border: 1.5px solid var(--faint); color: var(--muted);
+      padding: 16px 28px; border-radius: 50px;
+      text-decoration: none; font-weight: 600; font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--coral); color: var(--coral); }
+
+    .hero-note {
+      margin-top: 20px; font-size: 0.8rem; color: var(--faint);
+    }
+
+    /* ── PHONE MOCKUP ── */
+    .phone-section {
+      padding: 40px 24px 80px;
+      display: flex; justify-content: center;
+    }
+    .phone-frame {
+      width: 260px; position: relative;
+      border-radius: 40px;
+      border: 2px solid rgba(232,133,106,0.2);
+      box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+      overflow: hidden;
+      background: var(--card);
+    }
+    .phone-screen {
+      width: 100%; aspect-ratio: 9/19.5;
+      background: var(--bg2);
+      display: flex; flex-direction: column;
+    }
+    .phone-statusbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 16px 4px; font-size: 0.6rem; color: var(--muted);
+    }
+    .phone-appbar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .phone-logo {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: var(--coral); font-size: 0.7rem; font-weight: 800;
+      color: #fff; display: flex; align-items: center; justify-content: center;
+    }
+    .phone-icons { display: flex; gap: 6px; margin-left: auto; }
+    .phone-icon { width: 14px; height: 14px; border-radius: 2px; background: var(--faint); opacity: 0.6; }
+    .phone-greeting { padding: 12px 12px 6px; font-size: 0.72rem; font-weight: 700; color: var(--text); }
+    .phone-card {
+      margin: 6px 10px;
+      background: var(--card);
+      border-radius: 12px; padding: 12px;
+    }
+    .phone-card-title { font-size: 0.72rem; font-weight: 700; margin-bottom: 6px; }
+    .phone-card-body { font-size: 0.6rem; color: var(--muted); }
+    .phone-card-date { font-size: 0.55rem; color: var(--faint); margin-top: 4px; }
+    .phone-card-heart { float: right; color: var(--coral); font-size: 0.7rem; }
+    .phone-fab {
+      position: absolute; bottom: 20px; right: 16px;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--coral); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 300; box-shadow: 0 4px 14px rgba(232,133,106,0.5);
+    }
+
+    /* ── SECTION COMMON ── */
+    section { padding: 100px 24px; }
+    .section-label {
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--coral); margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800;
+      line-height: 1.2; letter-spacing: -0.02em; margin-bottom: 16px;
+    }
+    .section-sub { color: var(--muted); font-size: 1.05rem; max-width: 520px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    /* ── FEATURES ── */
+    #features { background: var(--bg2); }
+    .features-header { text-align: center; margin-bottom: 60px; }
+    .features-header .section-sub { margin: 0 auto; }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .feature-card {
+      background: var(--card); border-radius: var(--radius);
+      padding: 32px 28px;
+      border: 1px solid rgba(255,255,255,0.04);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-4px); border-color: rgba(232,133,106,0.2); }
+    .feature-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: rgba(232,133,106,0.12);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; margin-bottom: 20px;
+    }
+    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; }
+    .feature-card p { color: var(--muted); font-size: 0.92rem; line-height: 1.6; }
+
+    /* ── SCREENSHOTS ── */
+    #screenshots { background: var(--bg); }
+    .screenshots-header { text-align: center; margin-bottom: 60px; }
+    .screenshots-header .section-sub { margin: 0 auto; }
+    .screenshots-row {
+      display: flex; gap: 24px; justify-content: center;
+      flex-wrap: wrap;
+    }
+    .screenshot-wrap {
+      width: 200px; flex-shrink: 0;
+      border-radius: 28px; overflow: hidden;
+      border: 2px solid rgba(232,133,106,0.15);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      transition: transform 0.3s;
+    }
+    .screenshot-wrap:hover { transform: translateY(-8px) scale(1.02); }
+    .screenshot-wrap img { width: 100%; display: block; }
+    .screenshot-label {
+      text-align: center; margin-top: 12px;
+      font-size: 0.78rem; color: var(--muted); font-weight: 500;
+    }
+
+    /* ── PRIVACY HIGHLIGHT ── */
+    #privacy-highlight { background: var(--bg2); }
+    .privacy-split {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 60px; align-items: center;
+    }
+    .privacy-pills { display: flex; flex-direction: column; gap: 14px; margin-top: 32px; }
+    .pill {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--card); border-radius: 50px;
+      padding: 14px 20px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .pill-icon {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(232,133,106,0.12);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .pill span { font-size: 0.9rem; font-weight: 500; }
+    .privacy-shield {
+      display: flex; justify-content: center;
+    }
+    .shield-graphic {
+      width: 280px; height: 280px; border-radius: 50%;
+      background: radial-gradient(circle at 40% 40%, rgba(232,133,106,0.15), transparent 70%);
+      border: 1px solid rgba(232,133,106,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 7rem;
+    }
+
+    /* ── CTA ── */
+    #cta {
+      background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+      text-align: center;
+      position: relative; overflow: hidden;
+    }
+    #cta::before {
+      content: ''; position: absolute;
+      width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(232,133,106,0.12), transparent 70%);
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+    }
+    #cta .container { position: relative; }
+    #cta h2 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; margin-bottom: 16px; }
+    #cta h2 span { color: var(--coral); }
+    #cta p { color: var(--muted); font-size: 1.1rem; margin-bottom: 40px; }
+
+    /* ── PRIVACY POLICY ── */
+    #privacy {
+      background: var(--bg);
+      border-top: 1px solid rgba(232,133,106,0.1);
+    }
+    .privacy-content { max-width: 740px; margin: 0 auto; }
+    .privacy-content h2 { font-size: 2rem; margin-bottom: 8px; }
+    .privacy-content .updated { color: var(--faint); font-size: 0.85rem; margin-bottom: 40px; }
+    .privacy-section { margin-bottom: 36px; }
+    .privacy-section h3 {
+      font-size: 1.1rem; font-weight: 700; color: var(--coral);
+      margin-bottom: 10px;
+    }
+    .privacy-section p, .privacy-section li {
+      color: var(--muted); font-size: 0.95rem; line-height: 1.7;
+    }
+    .privacy-section ul { padding-left: 20px; }
+    .privacy-section li { margin-bottom: 6px; }
+    .privacy-section a { color: var(--coral); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 48px 24px;
+      text-align: center;
+    }
+    .footer-logo {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-size: 1.2rem; font-weight: 800; color: var(--coral);
+      margin-bottom: 16px; text-decoration: none;
+    }
+    .footer-logo-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--coral); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; font-weight: 800;
+    }
+    .footer-links { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
+    .footer-links a { color: var(--faint); text-decoration: none; font-size: 0.85rem; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--coral); }
+    .footer-copy { color: var(--faint); font-size: 0.8rem; margin-top: 8px; }
+
+    /* ── PLAY BADGE ── */
+    .play-badge {
+      display: inline-flex; align-items: center; gap: 14px;
+      background: #000; border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px; padding: 12px 24px;
+      text-decoration: none; transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .play-badge:hover { border-color: var(--coral); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+    .play-badge-text { display: flex; flex-direction: column; }
+    .play-badge-text small { color: #aaa; font-size: 0.68rem; font-weight: 400; letter-spacing: 0.04em; }
+    .play-badge-text strong { color: #fff; font-size: 1rem; font-weight: 700; line-height: 1.2; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 14px 20px; }
+      .nav-links { display: none; }
+      .privacy-split { grid-template-columns: 1fr; }
+      .privacy-shield { display: none; }
+      .phone-frame { width: 200px; }
+      section { padding: 70px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">p</div>
+    peteks
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#screenshots">Screenshots</a></li>
+    <li><a href="#privacy">Privacy</a></li>
+    <li><a href="mailto:info@peteksapp.com">Contact</a></li>
+  </ul>
+  <a href="https://play.google.com/store/apps/details?id=com.peteks.app" target="_blank" class="nav-cta">
+    Download Free →
+  </a>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-blob hero-blob-1"></div>
+  <div class="hero-blob hero-blob-2"></div>
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <div class="hero-badge-dot"></div>
+      Now available on Google Play
+    </div>
+    <h1>Your notes,<br><span>beautifully</span> private.</h1>
+    <p>Peteks is a personal notes app built around simplicity, security, and style. Write freely — your data never leaves your device.</p>
+    <div class="hero-buttons">
+      <a href="https://play.google.com/store/apps/details?id=com.peteks.app" target="_blank" class="btn-play">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.76c.3.17.65.19.97.06l13.2-7.62-2.83-2.83L3.18 23.76zM.33 1.28C.12 1.6 0 2.01 0 2.5v19c0 .49.12.9.33 1.22l.07.07 10.64-10.64v-.25L.4 1.21l-.07.07zM20.63 10.4l-2.87-1.66-3.17 3.17 3.17 3.17 2.9-1.67c.83-.48.83-1.53-.03-2.01zM4.15.24l13.2 7.62-2.83 2.83L4.22.3C3.9.13 3.55.14 3.18.3l.97-.06z"/></svg>
+        Get it on Google Play
+      </a>
+      <a href="#features" class="btn-ghost">
+        See features ↓
+      </a>
+    </div>
+    <p class="hero-note">Free · No ads · No account required</p>
+  </div>
+</section>
+
+<!-- ── PHONE MOCKUP ── -->
+<div class="phone-section">
+  <div class="phone-frame">
+    <div class="phone-screen">
+      <div class="phone-statusbar">
+        <span>9:41</span>
+        <span>●●●</span>
+      </div>
+      <div class="phone-appbar">
+        <div class="phone-logo">p</div>
+        <div class="phone-icons">
+          <div class="phone-icon"></div>
+          <div class="phone-icon"></div>
+          <div class="phone-icon"></div>
+        </div>
+      </div>
+      <div class="phone-greeting">Good morning, Tomer! ☀️</div>
+      <div class="phone-card" style="margin-top:10px;">
+        <span class="phone-card-heart">♥</span>
+        <div class="phone-card-title">Workout Plan</div>
+        <div style="height:1px;background:rgba(255,255,255,0.06);margin:6px 0;"></div>
+        <div class="phone-card-body">Monday: chest + arms<br>Tuesday: legs + core</div>
+        <div class="phone-card-date">May 30, 2026</div>
+      </div>
+      <div class="phone-card">
+        <div class="phone-card-title">📚 Books to Read</div>
+        <div style="height:1px;background:rgba(255,255,255,0.06);margin:6px 0;"></div>
+        <div class="phone-card-body">Atomic Habits · Deep Work<br>The Psychology of Money</div>
+        <div class="phone-card-date">May 28, 2026</div>
+      </div>
+      <div class="phone-card" style="background:rgba(232,133,106,0.08);border:1px solid rgba(232,133,106,0.2);">
+        <div class="phone-card-title" style="color:var(--coral);">🔒 Private Note</div>
+        <div style="height:1px;background:rgba(232,133,106,0.1);margin:6px 0;"></div>
+        <div class="phone-card-body">Protected with password</div>
+        <div class="phone-card-date">May 25, 2026</div>
+      </div>
+    </div>
+    <div class="phone-fab">+</div>
+  </div>
+</div>
+
+<!-- ── FEATURES ── -->
+<section id="features">
+  <div class="container">
+    <div class="features-header">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Everything you need,<br>nothing you don't.</h2>
+      <p class="section-sub">Designed to stay out of your way so you can focus on what matters — your thoughts.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">✍️</div>
+        <h3>Rich Text Editor</h3>
+        <p>Bold, italic, headings, bullet lists, font sizes and more. Write the way you think with a full formatting toolbar.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>Secure Private Vault</h3>
+        <p>Lock individual notes with a password or pattern. Hidden behind a secret corner button — invisible to anyone else.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">☁️</div>
+        <h3>Google Drive Backup</h3>
+        <p>Optionally back up all your notes to your own Google Drive. Restore anytime on any device. You own your data.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📁</div>
+        <h3>Folders & Favorites</h3>
+        <p>Organize notes into folders, mark favorites with a heart, and pin important notes to the top of your list.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3>Calendar View</h3>
+        <p>See your notes by the day you wrote them. Browse any month and jump straight to what you wrote that day.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌙</div>
+        <h3>Beautiful Dark Theme</h3>
+        <p>A warm, cozy dark theme that's easy on the eyes. Switch between dark, light, or follow your system setting.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Auto-Save</h3>
+        <p>Enable auto-save and never lose a thought again. Notes save as you type — no button required.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>Instant Search</h3>
+        <p>Search across all your notes instantly. Filter by folder, favorites, or tags to find exactly what you need.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖼️</div>
+        <h3>Images & Voice Notes</h3>
+        <p>Attach photos from your gallery or camera, and record voice memos directly inside any note.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SCREENSHOTS ── -->
+<section id="screenshots">
+  <div class="container">
+    <div class="screenshots-header">
+      <div class="section-label">Screenshots</div>
+      <h2 class="section-title">See it in action.</h2>
+      <p class="section-sub">Clean, warm, and focused. A notes app that feels good to use every day.</p>
+    </div>
+    <div class="screenshots-row">
+      <div>
+        <div class="screenshot-wrap">
+          <img src="https://tomercio.github.io/peteks/store_assets/screenshots/01_home.png" alt="Home screen" loading="lazy">
+        </div>
+        <p class="screenshot-label">Home</p>
+      </div>
+      <div>
+        <div class="screenshot-wrap">
+          <img src="https://tomercio.github.io/peteks/store_assets/screenshots/02_note_editor.png" alt="Note editor" loading="lazy">
+        </div>
+        <p class="screenshot-label">Editor</p>
+      </div>
+      <div>
+        <div class="screenshot-wrap">
+          <img src="https://tomercio.github.io/peteks/store_assets/screenshots/03_calendar.png" alt="Calendar view" loading="lazy">
+        </div>
+        <p class="screenshot-label">Calendar</p>
+      </div>
+      <div>
+        <div class="screenshot-wrap">
+          <img src="https://tomercio.github.io/peteks/store_assets/screenshots/04_settings.png" alt="Settings" loading="lazy">
+        </div>
+        <p class="screenshot-label">Settings</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRIVACY HIGHLIGHT ── -->
+<section id="privacy-highlight">
+  <div class="container">
+    <div class="privacy-split">
+      <div>
+        <div class="section-label">Privacy First</div>
+        <h2 class="section-title">Your notes stay<br>on your device.</h2>
+        <p class="section-sub">We built Peteks with a simple rule: your data is yours. Nothing is collected, tracked, or sold.</p>
+        <div class="privacy-pills">
+          <div class="pill">
+            <div class="pill-icon">🚫</div>
+            <span>No ads. Ever.</span>
+          </div>
+          <div class="pill">
+            <div class="pill-icon">📵</div>
+            <span>No tracking or analytics on your notes</span>
+          </div>
+          <div class="pill">
+            <div class="pill-icon">💾</div>
+            <span>All data stored locally on your device</span>
+          </div>
+          <div class="pill">
+            <div class="pill-icon">🔑</div>
+            <span>Secure notes use HMAC-SHA256 encryption</span>
+          </div>
+          <div class="pill">
+            <div class="pill-icon">☁️</div>
+            <span>Cloud backup only goes to your own Drive</span>
+          </div>
+        </div>
+      </div>
+      <div class="privacy-shield">
+        <div class="shield-graphic">🔐</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section id="cta">
+  <div class="container">
+    <h2>Ready to take <span>better notes?</span></h2>
+    <p>Free to download. No sign-up required. Your thoughts deserve a beautiful home.</p>
+    <a href="https://play.google.com/store/apps/details?id=com.peteks.app" target="_blank" class="play-badge">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M3.18 23.76c.3.17.65.19.97.06l13.2-7.62-2.83-2.83L3.18 23.76zM.33 1.28C.12 1.6 0 2.01 0 2.5v19c0 .49.12.9.33 1.22l.07.07 10.64-10.64v-.25L.4 1.21l-.07.07zM20.63 10.4l-2.87-1.66-3.17 3.17 3.17 3.17 2.9-1.67c.83-.48.83-1.53-.03-2.01zM4.15.24l13.2 7.62-2.83 2.83L4.22.3C3.9.13 3.55.14 3.18.3l.97-.06z"/></svg>
+      <div class="play-badge-text">
+        <small>GET IT ON</small>
+        <strong>Google Play</strong>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ── PRIVACY POLICY ── -->
+<section id="privacy">
+  <div class="container">
+    <div class="privacy-content">
+      <div class="section-label">Legal</div>
+      <h2>Privacy Policy</h2>
+      <p class="updated">Last updated: May 2026</p>
+
+      <p style="color:var(--muted);margin-bottom:32px;">
+        Peteks ("the App") is a personal notes application. Your privacy is our priority. This policy explains what data is collected and how it is used.
+      </p>
+
+      <div class="privacy-section">
+        <h3>1. Data We Collect</h3>
+        <ul>
+          <li><strong style="color:var(--text);">Notes content</strong> — Stored locally on your device using Hive. Not transmitted to any server by default.</li>
+          <li><strong style="color:var(--text);">Google Account information</strong> — If you use the Google Drive backup feature, the App accesses your Google account name and email solely to authenticate. We do not store or share this.</li>
+          <li><strong style="color:var(--text);">Google Drive files</strong> — With your permission, the App creates a "Peteks Notes" folder in your Drive. The App only accesses files it creates.</li>
+        </ul>
+      </div>
+
+      <div class="privacy-section">
+        <h3>2. Data We Do NOT Collect</h3>
+        <ul>
+          <li>We do not collect analytics or usage data about your notes.</li>
+          <li>We do not serve ads or share data with advertisers.</li>
+          <li>We do not transmit your notes to any third-party server.</li>
+          <li>We do not collect location, contacts, or any other device data.</li>
+        </ul>
+      </div>
+
+      <div class="privacy-section">
+        <h3>3. Security</h3>
+        <p>Secure notes are protected using HMAC-SHA256 hashing with a unique per-note salt. Passwords and patterns are never stored in plain text.</p>
+      </div>
+
+      <div class="privacy-section">
+        <h3>4. Third-Party Services</h3>
+        <ul>
+          <li><a href="https://firebase.google.com/support/privacy" target="_blank">Firebase</a> — anonymous crash reporting only.</li>
+          <li><a href="https://policies.google.com/privacy" target="_blank">Google Sign-In / Google Drive API</a> — only used when you choose to back up your notes.</li>
+        </ul>
+      </div>
+
+      <div class="privacy-section">
+        <h3>5. Children's Privacy</h3>
+        <p>The App is not directed at children under 13. We do not knowingly collect data from children.</p>
+      </div>
+
+      <div class="privacy-section">
+        <h3>6. Changes to This Policy</h3>
+        <p>We may update this policy from time to time. Changes will be reflected by the "Last updated" date above.</p>
+      </div>
+
+      <div class="privacy-section">
+        <h3>7. Contact</h3>
+        <p>Questions? Contact us at <a href="mailto:info@peteksapp.com">info@peteksapp.com</a></p>
+      </div>
+
+      <!-- TERMS OF SERVICE -->
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:60px 0;">
+
+      <div class="section-label">Legal</div>
+      <h2>Terms of Service</h2>
+      <p class="updated">Last updated: May 2026</p>
+
+      <div class="privacy-section">
+        <h3>1. Acceptance</h3>
+        <p>By using Peteks, you agree to these terms. If you do not agree, do not use the app.</p>
+      </div>
+      <div class="privacy-section">
+        <h3>2. Use of Service</h3>
+        <p>Peteks is provided for personal, non-commercial use. You are responsible for maintaining the confidentiality of your data.</p>
+      </div>
+      <div class="privacy-section">
+        <h3>3. User Content</h3>
+        <p>You are responsible for the content you create and store in Peteks. We do not access or share your data.</p>
+      </div>
+      <div class="privacy-section">
+        <h3>4. Disclaimer</h3>
+        <p>Peteks is provided "as is" without warranties. We are not responsible for any loss of data or damages. Always back up important notes.</p>
+      </div>
+      <div class="privacy-section">
+        <h3>5. Governing Law</h3>
+        <p>These terms are governed by the laws of Israel.</p>
+      </div>
+      <div class="privacy-section">
+        <h3>6. Contact</h3>
+        <p>Questions? Contact us at <a href="mailto:info@peteksapp.com">info@peteksapp.com</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <a href="#" class="footer-logo">
+    <div class="footer-logo-icon">p</div>
+    peteks
+  </a>
+  <div class="footer-links">
+    <a href="#features">Features</a>
+    <a href="#screenshots">Screenshots</a>
+    <a href="#privacy">Privacy Policy</a>
+    <a href="#privacy">Terms of Service</a>
+    <a href="mailto:info@peteksapp.com">Contact</a>
+    <a href="https://play.google.com/store/apps/details?id=com.peteks.app" target="_blank">Download</a>
+  </div>
+  <p class="footer-copy">© 2026 Peteks · Made with ♥ · <a href="mailto:info@peteksapp.com" style="color:var(--faint);text-decoration:none;">info@peteksapp.com</a></p>
+</footer>
+
+</body>
+</html>
