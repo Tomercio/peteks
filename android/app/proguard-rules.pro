@@ -15,7 +15,23 @@
 -keep class com.google.api.client.** { *; }
 
 # Keep your application class
--keep class com.example.peteks.** { *; }
+-keep class com.peteks.app.** { *; }
+
+# Hive
+-keep class * extends com.hivedb.hive.HiveObject { *; }
+-keep @com.hivedb.annotations.HiveType class * { *; }
+
+# Quill / JSON
+-keep class org.json.** { *; }
+-keepattributes *Annotation*
+-keepattributes Signature
+-dontwarn com.google.errorprone.**
+-dontwarn com.google.android.play.core.**
+-dontwarn javax.naming.**
+-dontwarn org.ietf.jgss.**
+-dontwarn org.apache.http.**
+-keep class com.google.android.play.core.** { *; }
+-keep class javax.naming.** { *; }
 
 # Keep native methods
 -keepclassmembers class * {

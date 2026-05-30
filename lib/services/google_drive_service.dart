@@ -13,7 +13,6 @@ class GoogleDriveService {
   static const List<String> _scopes = [
     'https://www.googleapis.com/auth/drive.file',
     'https://www.googleapis.com/auth/drive.appdata',
-    'https://www.googleapis.com/auth/drive',
   ];
 
   GoogleSignInAccount? _currentUser;

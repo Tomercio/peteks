@@ -13,6 +13,14 @@ if (localPropertiesFile.exists()) {
     }
 }
 
+def keyProperties = new Properties()
+def keyPropertiesFile = rootProject.file('key.properties')
+if (keyPropertiesFile.exists()) {
+    keyPropertiesFile.withReader('UTF-8') { reader ->
+        keyProperties.load(reader)
+    }
+}
+
 def flutterRoot = localProperties.getProperty('flutter.sdk')
 if (flutterRoot == null) {
     throw new Exception("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
@@ -31,6 +39,15 @@ if (flutterVersionName == null) {
 android {
     namespace "com.peteks.app"
     compileSdkVersion 35
+
+    signingConfigs {
+        release {
+            keyAlias keyProperties['keyAlias']
+            keyPassword keyProperties['keyPassword']
+            storeFile keyProperties['storeFile'] ? file(keyProperties['storeFile']) : null
+            storePassword keyProperties['storePassword']
+        }
+    }
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -72,10 +89,10 @@ android {
 
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
-            minifyEnabled false
-            shrinkResources false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 

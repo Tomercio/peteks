@@ -19,8 +19,9 @@ import 'package:flutter/foundation.dart';
 
 class NoteScreen extends StatefulWidget {
   final Note note;
+  final bool isNew;
 
-  const NoteScreen({super.key, required this.note});
+  const NoteScreen({super.key, required this.note, this.isNew = false});
 
   @override
   State<NoteScreen> createState() => _NoteScreenState();
@@ -165,7 +166,7 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
     });
     final autoSave =
         _storageService.getSetting('autoSave', defaultValue: false) == true;
-    if (autoSave) {
+    if (autoSave && _titleController.text.trim().isNotEmpty) {
       _autoSaveTimer?.cancel();
       _autoSaveTimer = Timer(const Duration(seconds: 2), () async {
         await _saveNote(showSnackbar: false);
@@ -175,6 +176,11 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
   }
 
   Future<bool> _onWillPop() async {
+    // If this is a new note with no title, just discard it silently
+    if (widget.isNew && _titleController.text.trim().isEmpty) {
+      return true;
+    }
+
     if (!_hasChanges) {
       return true;
     }
@@ -183,7 +189,7 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
         _storageService.getSetting('autoSave', defaultValue: false) == true;
     if (shouldAutoSave) {
       await _saveNote(showSnackbar: false);
-      return true; // Let WillPopScope handle the pop
+      return true;
     }
 
     // Show confirmation dialog
@@ -615,52 +621,52 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                 tooltip: 'Toggle pin',
               ),
             ),
-            const SizedBox(width: 4),
-            // Save button or auto-save indicator
-            if (_isAutoSaveOn)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: _isSaving
-                      ? SizedBox(
-                          key: const ValueKey('saving'),
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: appBarIconColor.withAlpha(128),
+            // Save button or auto-save indicator (no gap when idle)
+            AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              child: _isAutoSaveOn
+                  ? (_isSaving
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: appBarIconColor.withAlpha(128),
+                            ),
                           ),
                         )
                       : _autoSaveDone
-                          ? Icon(
-                              key: const ValueKey('saved'),
-                              Icons.check,
-                              size: 16,
-                              color: appBarIconColor.withAlpha(160),
+                          ? Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              child: Icon(
+                                Icons.check,
+                                size: 16,
+                                color: appBarIconColor.withAlpha(160),
+                              ),
                             )
-                          : const SizedBox(key: ValueKey('idle'), width: 16),
-                ),
-              )
-            else
-              AnimatedBuilder(
-                animation: _saveAnimation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: 1.0 + (_saveAnimation.value * 0.2),
-                    child: IconButton(
-                      icon: Icon(
-                        _isSaving ? Icons.hourglass_empty : Icons.save,
-                        color: appBarIconColor,
-                        size: 20,
-                      ),
-                      onPressed: _isSaving ? null : _saveNote,
-                      tooltip: _isSaving ? 'Saving...' : 'Save',
+                          : const SizedBox.shrink())
+                  : AnimatedBuilder(
+                      animation: _saveAnimation,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: 1.0 + (_saveAnimation.value * 0.2),
+                          child: IconButton(
+                            icon: Icon(
+                              _isSaving ? Icons.hourglass_empty : Icons.save,
+                              color: appBarIconColor,
+                              size: 20,
+                            ),
+                            onPressed: _isSaving ? null : _saveNote,
+                            tooltip: _isSaving ? 'Saving...' : 'Save',
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-            const SizedBox(width: 4),
+            ),
             // Popup menu
             PopupMenuButton<String>(
               color: Theme.of(context).brightness == Brightness.dark
@@ -806,6 +812,39 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Secure note banner
+                    if (_note.isSecure)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withAlpha(30),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withAlpha(80),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.lock,
+                                size: 16,
+                                color: theme.colorScheme.primary),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'This note is secured. On the home screen, tap the hidden box in the bottom-left corner to switch between secured and regular notes.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontFamily: 'Nunito',
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
                     // Image display if available
                     if (_imagePaths.isNotEmpty) _buildImagePreview(),
 
@@ -1272,7 +1311,12 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
               });
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Password set for note')),
+                const SnackBar(
+                  content: Text(
+                    '🔒 Note secured! Go back — tap the lock icon on the note card to unlock it next time.',
+                  ),
+                  duration: Duration(seconds: 4),
+                ),
               );
             },
             child: const Text('SET'),
@@ -1349,8 +1393,10 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Pattern set for note'),
-                  duration: Duration(milliseconds: 600),
+                  content: Text(
+                    '🔒 Note secured! Go back — tap the lock icon on the note card to unlock it next time.',
+                  ),
+                  duration: Duration(seconds: 4),
                 ),
               );
             },

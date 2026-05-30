@@ -51,9 +51,13 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // Add view mode state
   ViewMode _viewMode = ViewMode.list;
 
+  bool _showSecureHint = false;
+
   // Animation for tags
   late AnimationController _tagController;
   late Animation<double> _tagAnimation;
+  late AnimationController _hintPulseController;
+  late Animation<double> _hintPulse;
 
   // Animation for greeting pop
   late AnimationController _greetingController;
@@ -91,6 +95,14 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       curve: Curves.easeOutCubic,
     ));
 
+    _hintPulseController = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    )..repeat(reverse: true);
+    _hintPulse = Tween<double>(begin: 0.7, end: 1.0).animate(
+      CurvedAnimation(parent: _hintPulseController, curve: Curves.easeInOut),
+    );
+
     // Load view preference from settings
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadViewPreference();
@@ -102,6 +114,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void dispose() {
     _tagController.dispose();
     _greetingController.dispose();
+    _hintPulseController.dispose();
     super.dispose();
   }
 
@@ -145,6 +158,21 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _notes = _storageService.getAllNotes();
       _applyFilters();
     });
+    _checkSecureHint();
+  }
+
+  void _checkSecureHint() {
+    final hasSecure = _notes.any((n) => n.isSecure);
+    final hasSeen =
+        _storageService.getSetting('hasSeenSecureHint', defaultValue: false) == true;
+    if (hasSecure && !hasSeen && mounted) {
+      setState(() => _showSecureHint = true);
+    }
+  }
+
+  void _dismissSecureHint() {
+    _storageService.saveSetting('hasSeenSecureHint', true);
+    setState(() => _showSecureHint = false);
   }
 
   void _applyFilters() {
@@ -215,29 +243,113 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ? 0
         : _notes.map((n) => n.position).reduce((a, b) => a > b ? a : b) + 1;
 
-    // Create a new note and save it immediately
+    // Create note in memory only — do NOT save until user adds a title
     final note = Note(
       title: '',
       content: '',
       position: maxPosition,
     );
-    await _storageService.saveNote(note);
 
     if (mounted) {
       await Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => NoteScreen(note: note)),
+        MaterialPageRoute(
+            builder: (context) => NoteScreen(note: note, isNew: true)),
       );
       if (!mounted) return;
-      setState(() {
-        _loadNotes();
-      });
+      setState(() => _loadNotes());
     }
   }
 
+  /// After any delete, check if we're in secure view with no secured notes left → go back to normal.
+  void _exitSecureViewIfEmpty() {
+    if (_showOnlySecured && !_notes.any((n) => n.isSecure)) {
+      setState(() {
+        _showOnlySecured = false;
+        _applyFilters();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No more secured notes — back to regular view.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  /// Delete a note immediately from both the list and storage.
+  Future<void> _deleteNoteInstantly(Note note) async {
+    setState(() {
+      _notes.removeWhere((n) => n.id == note.id);
+      _filteredNotes.removeWhere((n) => n.id == note.id);
+    });
+    _exitSecureViewIfEmpty();
+    await _storageService.deleteNote(note.id);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Note deleted'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _showLongPressMenu(Note note) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.withAlpha(80),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Text(
+                note.title.isEmpty ? 'Untitled' : note.title,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    fontFamily: 'Nunito'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: const Text('Delete',
+                  style: TextStyle(color: Colors.red, fontFamily: 'Nunito')),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _deleteNoteInstantly(note);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _handlePendingDelete(String noteId) async {
-    // Reload notes immediately — the note still exists in storage at this point
-    setState(() => _loadNotes());
+    // Remove from the visible list immediately — no refresh lag
+    setState(() {
+      _notes.removeWhere((n) => n.id == noteId);
+      _filteredNotes.removeWhere((n) => n.id == noteId);
+    });
+    _exitSecureViewIfEmpty();
 
     bool undone = false;
     final messenger = ScaffoldMessenger.of(context);
@@ -251,7 +363,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           onPressed: () {
             undone = true;
             PendingDelete.clear();
-            setState(() => _loadNotes());
+            setState(() => _loadNotes()); // restore from storage
           },
         ),
       ),
@@ -265,7 +377,6 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         }
         await _storageService.deleteNote(noteId);
         PendingDelete.clear();
-        if (mounted) setState(() => _loadNotes());
       }
     }
   }
@@ -446,6 +557,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               bottom: 0,
               child: GestureDetector(
                 onTap: () {
+                  if (_showSecureHint) _dismissSecureHint();
                   setState(() {
                     _showOnlySecured = !_showOnlySecured;
                     _applyFilters();
@@ -454,6 +566,83 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 child: CustomPaint(
                   size: const Size(28, 28),
                   painter: _FoldedCornerButtonPainter(),
+                ),
+              ),
+            ),
+
+          // One-time hint pointing to the secret corner button
+          if (_showSecureHint)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _dismissSecureHint,
+                child: Container(
+                  color: Colors.black.withAlpha(140),
+                  child: Stack(
+                    children: [
+                      // Arrow + label pointing to bottom-left corner
+                      Positioned(
+                        left: 16,
+                        bottom: 52,
+                        child: AnimatedBuilder(
+                          animation: _hintPulse,
+                          builder: (context, child) => Opacity(
+                            opacity: _hintPulse.value,
+                            child: child,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: const Text(
+                                  '🔒  Your secured notes are hidden here!\nTap this corner to reveal them.',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontFamily: 'Nunito',
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ),
+                              // Arrow pointing down-left toward the corner
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8),
+                                child: CustomPaint(
+                                  size: const Size(20, 16),
+                                  painter: _DownArrowPainter(
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // "Tap anywhere to dismiss" hint at center-bottom
+                      Positioned(
+                        bottom: 12,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Text(
+                            'Tap anywhere to dismiss',
+                            style: TextStyle(
+                              color: Colors.white.withAlpha(160),
+                              fontSize: 12,
+                              fontFamily: 'Nunito',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -597,6 +786,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               setState(() => _loadNotes());
             }
           },
+          onLongPress: () => _showLongPressMenu(note),
           onFavoriteToggle: () {
             setState(() {
               final updatedNote = note.copyWith(
@@ -748,6 +938,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               setState(() => _loadNotes());
             }
           },
+          onLongPress: () => _showLongPressMenu(note),
           onFavoriteToggle: () {
             setState(() {
               final updatedNote = note.copyWith(
@@ -772,27 +963,27 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     String subtitle;
 
     if (_showOnlySecured) {
-      icon_char = '🔒';
+      iconChar = '🔒';
       title = 'No secured notes';
       subtitle = 'Lock a note with a pattern or password to see it here.';
     } else if (_showOnlyFavorites) {
-      icon_char = '⭐';
+      iconChar = '⭐';
       title = 'No favourites yet';
       subtitle = 'Tap the star on any note to add it to favourites.';
     } else if (_selectedTag != null) {
-      icon_char = '🏷️';
+      iconChar = '🏷️';
       title = 'No notes with this tag';
       subtitle = 'Add the tag "${_selectedTag!}" to a note to see it here.';
     } else if (_selectedFolderId != null) {
-      icon_char = '📁';
+      iconChar = '📁';
       title = 'This folder is empty';
       subtitle = 'Move a note into this folder to see it here.';
     } else if (_notes.isNotEmpty) {
-      icon_char = '🔍';
+      iconChar = '🔍';
       title = 'No notes match';
       subtitle = 'Try a different filter.';
     } else {
-      icon_char = '📝';
+      iconChar = '📝';
       title = 'No notes yet';
       subtitle = 'Tap + to write your first note!';
     }
@@ -1056,6 +1247,27 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       },
     );
   }
+}
+
+class _DownArrowPainter extends CustomPainter {
+  final Color color;
+  const _DownArrowPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _FoldedCornerButtonPainter extends CustomPainter {

@@ -12,6 +12,7 @@ class NoteCard extends StatefulWidget {
   final Note note;
   final VoidCallback onTap;
   final VoidCallback? onFavoriteToggle;
+  final VoidCallback? onLongPress;
   final NoteCardMode mode;
 
   const NoteCard({
@@ -19,6 +20,7 @@ class NoteCard extends StatefulWidget {
     required this.note,
     required this.onTap,
     this.onFavoriteToggle,
+    this.onLongPress,
     this.mode = NoteCardMode.grid,
   });
 
@@ -105,6 +107,7 @@ class _NoteCardState extends State<NoteCard>
             widget.onTap();
           },
           onTapCancel: () => _animationController.reverse(),
+          onLongPress: widget.onLongPress,
           child: Card(
             color: cardColor,
             elevation: widget.note.isPinned ? 8 : 2,
@@ -294,6 +297,7 @@ class _NoteCardState extends State<NoteCard>
           widget.onTap();
         },
         onTapCancel: () => _animationController.reverse(),
+        onLongPress: widget.onLongPress,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
