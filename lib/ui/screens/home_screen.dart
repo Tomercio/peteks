@@ -387,7 +387,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             // "No folder" option
             ListTile(
               leading: const Icon(Icons.inbox_outlined),
-              title: const Text('All Notes (no folder)',
+              title: const Text('All Notes (remove from folder)',
                   style: TextStyle(fontFamily: 'Nunito')),
               trailing: note.folderId == null
                   ? const Icon(Icons.check, size: 18)
@@ -1121,7 +1121,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           Padding(
             padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
             child: ChoiceChip(
-              label: const Text('All Notes'),
+              label: const Text('All'),
               selected: _selectedFolderId == null,
               showCheckmark: false,
               onSelected: (_) {
