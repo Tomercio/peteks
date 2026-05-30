@@ -594,58 +594,70 @@
   <div class="container">
     <div class="privacy-content">
       <div class="section-label">Legal</div>
-      <h2>Privacy Policy</h2>
-      <p class="updated">Last updated: May 2026</p>
+      <h2>Privacy &amp; Legal</h2>
+      <p class="updated">Last updated: May 30, 2026</p>
 
       <p style="color:var(--muted);margin-bottom:32px;">
-        Peteks ("the App") is a personal notes application. Your privacy is our priority. This policy explains what data is collected and how it is used.
+        Your privacy is our top priority. Peteks stores your notes on <strong style="color:var(--text);">your device only</strong>. We don't sell your data, show ads, or track what you write.
       </p>
 
+      <!-- Summary cards -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:36px;">
+        <div style="background:var(--card);border-radius:14px;padding:18px;border:1px solid rgba(255,255,255,0.04);text-align:center;">
+          <div style="font-size:2rem;margin-bottom:8px;">🚫</div>
+          <strong>No Ads</strong>
+          <p style="color:var(--muted);font-size:0.82rem;margin-top:4px;">We never show ads or sell your data</p>
+        </div>
+        <div style="background:var(--card);border-radius:14px;padding:18px;border:1px solid rgba(255,255,255,0.04);text-align:center;">
+          <div style="font-size:2rem;margin-bottom:8px;">📵</div>
+          <strong>No Tracking</strong>
+          <p style="color:var(--muted);font-size:0.82rem;margin-top:4px;">Notes content never leaves your device</p>
+        </div>
+        <div style="background:var(--card);border-radius:14px;padding:18px;border:1px solid rgba(255,255,255,0.04);text-align:center;">
+          <div style="font-size:2rem;margin-bottom:8px;">🔐</div>
+          <strong>GDPR &amp; CCPA</strong>
+          <p style="color:var(--muted);font-size:0.82rem;margin-top:4px;">Fully compliant — EU &amp; California rights protected</p>
+        </div>
+        <div style="background:var(--card);border-radius:14px;padding:18px;border:1px solid rgba(255,255,255,0.04);text-align:center;">
+          <div style="font-size:2rem;margin-bottom:8px;">⚡</div>
+          <strong>30-Day Response</strong>
+          <p style="color:var(--muted);font-size:0.82rem;margin-top:4px;">We respond to all privacy requests within 30 days</p>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-bottom:48px;">
+        <a href="/privacy.html" style="display:inline-flex;align-items:center;gap:10px;background:var(--coral);color:#fff;padding:14px 32px;border-radius:50px;text-decoration:none;font-weight:700;font-size:0.95rem;">
+          📄 Read Full Privacy Policy →
+        </a>
+        <p style="color:var(--faint);font-size:0.8rem;margin-top:12px;">Includes GDPR rights, CCPA rights, data table, third-party services &amp; more</p>
+      </div>
+
       <div class="privacy-section">
-        <h3>1. Data We Collect</h3>
+        <h3>What We Collect — Summary</h3>
         <ul>
-          <li><strong style="color:var(--text);">Notes content</strong> — Stored locally on your device using Hive. Not transmitted to any server by default.</li>
-          <li><strong style="color:var(--text);">Google Account information</strong> — If you use the Google Drive backup feature, the App accesses your Google account name and email solely to authenticate. We do not store or share this.</li>
-          <li><strong style="color:var(--text);">Google Drive files</strong> — With your permission, the App creates a "Peteks Notes" folder in your Drive. The App only accesses files it creates.</li>
+          <li><strong style="color:var(--text);">Notes content</strong> — Stored locally on your device only. Never transmitted to our servers.</li>
+          <li><strong style="color:var(--text);">Firebase Analytics</strong> — Anonymous usage events only (e.g. "app opened"). No note content, no personal info.</li>
+          <li><strong style="color:var(--text);">Firebase Crashlytics</strong> — Anonymous crash reports (device model, OS version). No personal data.</li>
+          <li><strong style="color:var(--text);">Google Account</strong> — Only if you use Google Drive backup. Not stored by us.</li>
+          <li><strong style="color:var(--text);">Google Drive</strong> — Your backup goes to <em>your own</em> Drive. We cannot access it.</li>
         </ul>
       </div>
 
       <div class="privacy-section">
-        <h3>2. Data We Do NOT Collect</h3>
+        <h3>What We NEVER Do</h3>
         <ul>
-          <li>We do not collect analytics or usage data about your notes.</li>
-          <li>We do not serve ads or share data with advertisers.</li>
-          <li>We do not transmit your notes to any third-party server.</li>
-          <li>We do not collect location, contacts, or any other device data.</li>
+          <li>❌ Read or store your note content on our servers</li>
+          <li>❌ Sell your data to anyone</li>
+          <li>❌ Show advertisements</li>
+          <li>❌ Track your location</li>
+          <li>❌ Share data with data brokers or advertisers</li>
+          <li>❌ Collect data from children under 13</li>
         </ul>
       </div>
 
       <div class="privacy-section">
-        <h3>3. Security</h3>
-        <p>Secure notes are protected using HMAC-SHA256 hashing with a unique per-note salt. Passwords and patterns are never stored in plain text.</p>
-      </div>
-
-      <div class="privacy-section">
-        <h3>4. Third-Party Services</h3>
-        <ul>
-          <li><a href="https://firebase.google.com/support/privacy" target="_blank">Firebase</a> — anonymous crash reporting only.</li>
-          <li><a href="https://policies.google.com/privacy" target="_blank">Google Sign-In / Google Drive API</a> — only used when you choose to back up your notes.</li>
-        </ul>
-      </div>
-
-      <div class="privacy-section">
-        <h3>5. Children's Privacy</h3>
-        <p>The App is not directed at children under 13. We do not knowingly collect data from children.</p>
-      </div>
-
-      <div class="privacy-section">
-        <h3>6. Changes to This Policy</h3>
-        <p>We may update this policy from time to time. Changes will be reflected by the "Last updated" date above.</p>
-      </div>
-
-      <div class="privacy-section">
-        <h3>7. Contact</h3>
-        <p>Questions? Contact us at <a href="mailto:info@peteksapp.com">info@peteksapp.com</a></p>
+        <h3>Security</h3>
+        <p>Secure notes use <strong style="color:var(--text);">HMAC-SHA256 hashing</strong> with a unique per-note salt. Passwords and patterns are never stored in plain text. All cloud communication uses HTTPS/TLS.</p>
       </div>
 
       <!-- TERMS OF SERVICE -->
@@ -653,7 +665,7 @@
 
       <div class="section-label">Legal</div>
       <h2>Terms of Service</h2>
-      <p class="updated">Last updated: May 2026</p>
+      <p class="updated">Last updated: May 30, 2026</p>
 
       <div class="privacy-section">
         <h3>1. Acceptance</h3>
@@ -669,15 +681,15 @@
       </div>
       <div class="privacy-section">
         <h3>4. Disclaimer</h3>
-        <p>Peteks is provided "as is" without warranties. We are not responsible for any loss of data or damages. Always back up important notes.</p>
+        <p>Peteks is provided "as is" without warranties. We are not responsible for any loss of data or damages. Always back up important notes using the Google Drive sync feature.</p>
       </div>
       <div class="privacy-section">
         <h3>5. Governing Law</h3>
-        <p>These terms are governed by the laws of Israel.</p>
+        <p>These terms are governed by the laws of <strong style="color:var(--text);">Israel</strong>, without regard to its conflict of law principles.</p>
       </div>
       <div class="privacy-section">
         <h3>6. Contact</h3>
-        <p>Questions? Contact us at <a href="mailto:info@peteksapp.com">info@peteksapp.com</a></p>
+        <p>Questions? <a href="mailto:info@peteksapp.com">info@peteksapp.com</a> · <a href="https://peteksapp.com">peteksapp.com</a></p>
       </div>
     </div>
   </div>
