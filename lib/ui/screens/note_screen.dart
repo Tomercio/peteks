@@ -53,6 +53,7 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
   bool _tagAdded = false;
 
   late quill.QuillController _quillController;
+  bool _isRTL = false;
 
   // Add a field for the recorder
   FlutterSoundRecorder? _audioRecorder;
@@ -1017,6 +1018,30 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                                 showListNumbers: true,
                               ),
                             ),
+                            // RTL / LTR toggle
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: Tooltip(
+                                message: _isRTL ? 'Switch to LTR' : 'Switch to RTL',
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(6),
+                                  onTap: () => setState(() => _isRTL = !_isRTL),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    child: Text(
+                                      _isRTL ? 'LTR' : 'RTL',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: _isRTL
+                                            ? Theme.of(context).colorScheme.primary
+                                            : Theme.of(context).textTheme.bodyMedium?.color,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -1037,19 +1062,22 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                       ),
                       child: Stack(
                         children: [
-                          // Editor — Directionality is auto-detected per content
+                          // Editor with RTL/LTR support
                           FadeTransition(
                             opacity: _contentAnimation,
-                            child: quill.QuillEditor(
-                              controller: _quillController,
-                              scrollController: _scrollController,
-                              focusNode: _editorFocusNode,
-                              config: quill.QuillEditorConfig(
-                                placeholder: 'Write your note...',
-                                padding: const EdgeInsets.all(16),
-                                autoFocus: false,
-                                expands: false,
-                                scrollable: true,
+                            child: Directionality(
+                              textDirection: _isRTL ? TextDirection.rtl : TextDirection.ltr,
+                              child: quill.QuillEditor(
+                                controller: _quillController,
+                                scrollController: _scrollController,
+                                focusNode: _editorFocusNode,
+                                config: quill.QuillEditorConfig(
+                                  placeholder: 'Write your note...',
+                                  padding: const EdgeInsets.all(16),
+                                  autoFocus: false,
+                                  expands: false,
+                                  scrollable: true,
+                                ),
                               ),
                             ),
                           ),

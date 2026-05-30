@@ -269,13 +269,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 context: context,
                 applicationName: 'Peteks',
                 applicationVersion: _version,
+                applicationLegalese: '© ${DateTime.now().year} Tomer (Peteks). All rights reserved.\nNunito font licensed under SIL OFL 1.1.',
                 applicationIcon: Image.asset(
                   'assets/peteks.png',
                   height: 64,
                 ),
                 children: [
+                  const SizedBox(height: 12),
                   const Text(
-                    'Peteks is a simple and elegant note-taking app that helps you organize your thoughts and ideas.',
+                    'A beautiful, private notes app. Your notes stay on your device — no ads, no tracking.',
+                    style: TextStyle(fontSize: 13),
                   ),
                 ],
               );

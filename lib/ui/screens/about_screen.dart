@@ -22,17 +22,8 @@ class AboutScreen extends StatelessWidget {
             Center(
               child: Column(
                 children: [
-                  Image.asset('assets/peteks.png', height: 80),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Peteks',
-                    style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: coral,
-                        fontFamily: 'Nunito'),
-                  ),
-                  const SizedBox(height: 4),
+                  Image.asset('assets/peteks.png', height: 90),
+                  const SizedBox(height: 8),
                   Text(
                     'Your notes, beautifully and private.',
                     style: TextStyle(
