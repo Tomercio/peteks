@@ -1,0 +1,4 @@
+package_name "com.peteks.app"
+
+# Path to your Play Store JSON key — keep this file OUT of version control.
+# json_key_file "fastlane/play-store-key.json"

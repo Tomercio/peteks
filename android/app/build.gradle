@@ -29,7 +29,7 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace "com.example.peteks"
+    namespace "com.peteks.app"
     compileSdkVersion 35
     ndkVersion flutter.ndkVersion
 
@@ -48,12 +48,26 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.peteks"
+        applicationId "com.peteks.app"
         minSdkVersion 24
         targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
+    }
+
+    flavorDimensions "environment"
+
+    productFlavors {
+        dev {
+            dimension "environment"
+            applicationIdSuffix ".dev"
+            resValue "string", "app_name", "Peteks Dev"
+        }
+        prod {
+            dimension "environment"
+            resValue "string", "app_name", "Peteks"
+        }
     }
 
     buildTypes {

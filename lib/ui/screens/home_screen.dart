@@ -12,6 +12,22 @@ import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'package:pattern_lock/pattern_lock.dart';
 import 'calendar_screen.dart';
+import '../../services/image_service.dart';
+import '../../models/folder.dart';
+import '../../utils/pending_delete.dart';
+import 'whats_new_screen.dart';
+
+// Verify a security input against the stored hash.
+// Supports both new HMAC+salt hashes and legacy plain-sha256 hashes.
+bool _verifyHash(String input, String storedHash, String? salt) {
+  if (salt != null && salt.isNotEmpty) {
+    final key = utf8.encode(salt);
+    final hmac = Hmac(sha256, key);
+    return hmac.convert(utf8.encode(input)).toString() == storedHash;
+  }
+  // Legacy fallback: plain sha256
+  return sha256.convert(utf8.encode(input)).toString() == storedHash;
+}
 
 enum ViewMode { grid, list }
 
@@ -29,6 +45,8 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   String? _selectedTag;
   bool _showOnlyFavorites = false;
   bool _showOnlySecured = false;
+  String? _selectedFolderId; // null = All Notes
+  String _sortMode = 'modified'; // modified | created | az | za
 
   // Add view mode state
   ViewMode _viewMode = ViewMode.list;
@@ -92,15 +110,20 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.didChangeDependencies();
     _storageService = Provider.of<StorageService>(context);
     _loadNotes();
-    // Trigger greeting animation when entering the screen
     _greetingController.forward(from: 0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WhatsNewDialog.showIfNeeded(context);
+    });
   }
 
   void _loadViewPreference() {
     final savedViewMode =
         _storageService.getSetting('viewMode', defaultValue: 'list');
+    final savedSort =
+        _storageService.getSetting('sortMode', defaultValue: 'modified');
     setState(() {
       _viewMode = savedViewMode == 'grid' ? ViewMode.grid : ViewMode.list;
+      _sortMode = savedSort as String;
     });
   }
 
@@ -127,6 +150,11 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void _applyFilters() {
     setState(() {
       _filteredNotes = List.from(_notes);
+      if (_selectedFolderId != null) {
+        _filteredNotes = _filteredNotes
+            .where((note) => note.folderId == _selectedFolderId)
+            .toList();
+      }
       if (_selectedTag != null) {
         _filteredNotes = _filteredNotes
             .where((note) => note.tags.contains(_selectedTag))
@@ -144,10 +172,23 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             _filteredNotes.where((note) => !note.isSecure).toList();
       }
       _filteredNotes.sort((a, b) {
+        // Pinned always first
         if (a.isPinned && !b.isPinned) return -1;
         if (!a.isPinned && b.isPinned) return 1;
-        if (a.position != b.position) return a.position.compareTo(b.position);
-        return b.modifiedAt.compareTo(a.modifiedAt);
+        switch (_sortMode) {
+          case 'created':
+            return b.createdAt.compareTo(a.createdAt);
+          case 'az':
+            return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+          case 'za':
+            return b.title.toLowerCase().compareTo(a.title.toLowerCase());
+          case 'modified':
+          default:
+            if (a.position != b.position) {
+              return a.position.compareTo(b.position);
+            }
+            return b.modifiedAt.compareTo(a.modifiedAt);
+        }
       });
     });
   }
@@ -194,6 +235,41 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> _handlePendingDelete(String noteId) async {
+    // Reload notes immediately — the note still exists in storage at this point
+    setState(() => _loadNotes());
+
+    bool undone = false;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    final controller = messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Note deleted'),
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            undone = true;
+            PendingDelete.clear();
+            setState(() => _loadNotes());
+          },
+        ),
+      ),
+    );
+    await controller.closed;
+    if (!undone) {
+      final pending = PendingDelete.note;
+      if (pending != null && pending.id == noteId) {
+        for (final p in PendingDelete.imagePaths) {
+          await ImageService.deleteImage(p);
+        }
+        await _storageService.deleteNote(noteId);
+        PendingDelete.clear();
+        if (mounted) setState(() => _loadNotes());
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final storageService = Provider.of<StorageService>(context, listen: false);
@@ -224,6 +300,24 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         ),
         actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.sort, size: 20),
+            tooltip: 'Sort notes',
+            padding: EdgeInsets.zero,
+            onSelected: (value) {
+              setState(() {
+                _sortMode = value;
+                _storageService.saveSetting('sortMode', value);
+                _applyFilters();
+              });
+            },
+            itemBuilder: (_) => [
+              _sortItem('modified', 'Last modified', Icons.access_time),
+              _sortItem('created', 'Date created', Icons.calendar_today_outlined),
+              _sortItem('az', 'A → Z', Icons.sort_by_alpha),
+              _sortItem('za', 'Z → A', Icons.sort_by_alpha),
+            ],
+          ),
           IconButton(
             icon: Icon(
                 _viewMode == ViewMode.grid ? Icons.view_list : Icons.grid_view,
@@ -332,19 +426,13 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
+              _buildFolderBar(),
               if (_notes.isNotEmpty) _buildTagsBar(),
 
               // Notes display - Grid or List
               Expanded(
                 child: _filteredNotes.isEmpty
-                    ? Center(
-                        child: Text(
-                          _selectedTag != null || _showOnlyFavorites
-                              ? 'No notes match your filters'
-                              : 'No notes yet. Tap + to create one!',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      )
+                    ? _buildEmptyState()
                     : (_viewMode == ViewMode.list
                         ? _buildListView()
                         : _buildGridView()),
@@ -446,10 +534,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ),
                             TextButton(
                               onPressed: () {
-                                final hash = sha256
-                                    .convert(utf8.encode(pass.text))
-                                    .toString();
-                                if (hash == note.securityHash) {
+                                if (_verifyHash(pass.text, note.securityHash!, note.securitySalt)) {
                                   Navigator.of(context).pop(true);
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -483,10 +568,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               showInput: true,
                               dimension: 3,
                               onInputComplete: (List<int> input) {
-                                final hash = sha256
-                                    .convert(utf8.encode(input.join('-')))
-                                    .toString();
-                                if (hash == note.securityHash) {
+                                if (_verifyHash(input.join('-'), note.securityHash!, note.securitySalt)) {
                                   Navigator.of(context).pop(true);
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -504,14 +586,16 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               }
             }
             if (!unlocked) return;
-            await Navigator.push(
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => NoteScreen(note: note)),
             );
             if (!mounted) return;
-            setState(() {
-              _loadNotes();
-            });
+            if (result is Map && result['pendingDelete'] != null) {
+              _handlePendingDelete(result['pendingDelete'] as String);
+            } else {
+              setState(() => _loadNotes());
+            }
           },
           onFavoriteToggle: () {
             setState(() {
@@ -546,7 +630,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           child: child,
         );
       },
-      itemCount: _filteredNotes.length > 9 ? 9 : _filteredNotes.length,
+      itemCount: _filteredNotes.length,
       onReorder: (oldIndex, newIndex) {
         if (oldIndex == newIndex) return;
 
@@ -601,10 +685,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ),
                             TextButton(
                               onPressed: () {
-                                final hash = sha256
-                                    .convert(utf8.encode(pass.text))
-                                    .toString();
-                                if (hash == note.securityHash) {
+                                if (_verifyHash(pass.text, note.securityHash!, note.securitySalt)) {
                                   Navigator.of(context).pop(true);
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -638,10 +719,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               showInput: true,
                               dimension: 3,
                               onInputComplete: (List<int> input) {
-                                final hash = sha256
-                                    .convert(utf8.encode(input.join('-')))
-                                    .toString();
-                                if (hash == note.securityHash) {
+                                if (_verifyHash(input.join('-'), note.securityHash!, note.securitySalt)) {
                                   Navigator.of(context).pop(true);
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -659,14 +737,16 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               }
             }
             if (!unlocked) return;
-            await Navigator.push(
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => NoteScreen(note: note)),
             );
             if (!mounted) return;
-            setState(() {
-              _loadNotes();
-            });
+            if (result is Map && result['pendingDelete'] != null) {
+              _handlePendingDelete(result['pendingDelete'] as String);
+            } else {
+              setState(() => _loadNotes());
+            }
           },
           onFavoriteToggle: () {
             setState(() {
@@ -680,6 +760,189 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           mode: NoteCardMode.grid,
         );
       },
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final primary = Theme.of(context).colorScheme.primary;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+
+    String iconChar;
+    String title;
+    String subtitle;
+
+    if (_showOnlySecured) {
+      icon_char = '🔒';
+      title = 'No secured notes';
+      subtitle = 'Lock a note with a pattern or password to see it here.';
+    } else if (_showOnlyFavorites) {
+      icon_char = '⭐';
+      title = 'No favourites yet';
+      subtitle = 'Tap the star on any note to add it to favourites.';
+    } else if (_selectedTag != null) {
+      icon_char = '🏷️';
+      title = 'No notes with this tag';
+      subtitle = 'Add the tag "${_selectedTag!}" to a note to see it here.';
+    } else if (_selectedFolderId != null) {
+      icon_char = '📁';
+      title = 'This folder is empty';
+      subtitle = 'Move a note into this folder to see it here.';
+    } else if (_notes.isNotEmpty) {
+      icon_char = '🔍';
+      title = 'No notes match';
+      subtitle = 'Try a different filter.';
+    } else {
+      icon_char = '📝';
+      title = 'No notes yet';
+      subtitle = 'Tap + to write your first note!';
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: primary.withAlpha(20),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(iconChar, style: const TextStyle(fontSize: 44)),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: onSurface,
+                fontFamily: 'Nunito',
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 14,
+                color: onSurface.withAlpha(150),
+                fontFamily: 'Nunito',
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFolderBar() {
+    final folders = _storageService.getFolders();
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
+            child: ChoiceChip(
+              label: const Text('All Notes'),
+              selected: _selectedFolderId == null,
+              onSelected: (_) {
+                setState(() {
+                  _selectedFolderId = null;
+                  _applyFilters();
+                });
+              },
+            ),
+          ),
+          ...folders.map((folder) => Padding(
+                padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
+                child: ChoiceChip(
+                  avatar: Icon(folder.icon, size: 16, color: folder.color),
+                  label: Text(folder.name),
+                  selected: _selectedFolderId == folder.id,
+                  onSelected: (_) {
+                    setState(() {
+                      _selectedFolderId =
+                          _selectedFolderId == folder.id ? null : folder.id;
+                      _applyFilters();
+                    });
+                  },
+                ),
+              )),
+          // Add-folder button
+          Padding(
+            padding: const EdgeInsets.only(right: 4, top: 6, bottom: 6),
+            child: ActionChip(
+              avatar: const Icon(Icons.create_new_folder_outlined, size: 16),
+              label: const Text('New Folder'),
+              onPressed: () => _showFolderDialog(null),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFolderDialog(Folder? existing) {
+    final nameController =
+        TextEditingController(text: existing?.name ?? '');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(existing == null ? 'New Folder' : 'Rename Folder'),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Folder name'),
+        ),
+        actions: [
+          if (existing != null)
+            TextButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await _storageService.deleteFolder(existing.id);
+                if (_selectedFolderId == existing.id) {
+                  setState(() {
+                    _selectedFolderId = null;
+                    _loadNotes();
+                  });
+                } else {
+                  setState(() => _loadNotes());
+                }
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              final folder = existing?.copyWith(name: name) ??
+                  Folder(
+                    name: name,
+                    position: _storageService.getFolders().length,
+                  );
+              await _storageService.saveFolder(folder);
+              if (!ctx.mounted) return;
+              Navigator.of(ctx).pop();
+              setState(() => _loadNotes());
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -754,6 +1017,26 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   )),
           ],
         ),
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _sortItem(String value, String label, IconData icon) {
+    final selected = _sortMode == value;
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 18,
+              color: selected
+                  ? Theme.of(context).colorScheme.primary
+                  : null),
+          const SizedBox(width: 8),
+          Text(label,
+              style: TextStyle(
+                  fontWeight:
+                      selected ? FontWeight.w700 : FontWeight.normal)),
+        ],
       ),
     );
   }

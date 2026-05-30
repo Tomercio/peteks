@@ -1,0 +1,9 @@
+Version 1.0.0 — First release!
+
+• Rich text editor with checklists, bold, italic, and more
+• Folders & tags system
+• Secure notes with pattern or password lock
+• Google Drive backup & restore
+• Comfy Light & Dark themes
+• Auto-save, undo deletion, sort options
+• Onboarding for new users

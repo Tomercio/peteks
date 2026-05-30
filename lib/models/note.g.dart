@@ -35,13 +35,15 @@ class NoteAdapter extends TypeAdapter<Note> {
       isSecure: fields[15] as bool? ?? false,
       securityType: fields[16] as String?,
       securityHash: fields[17] as String?,
+      securitySalt: fields[18] as String?,
+      folderId: fields[19] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Note obj) {
     writer
-      ..writeByte(18)
+      ..writeByte(20)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -77,7 +79,11 @@ class NoteAdapter extends TypeAdapter<Note> {
       ..writeByte(16)
       ..write(obj.securityType)
       ..writeByte(17)
-      ..write(obj.securityHash);
+      ..write(obj.securityHash)
+      ..writeByte(18)
+      ..write(obj.securitySalt)
+      ..writeByte(19)
+      ..write(obj.folderId);
   }
 
   @override

@@ -1,0 +1,12 @@
+Peteks is a beautifully designed note-taking app with a warm, cozy aesthetic.
+
+✏️ Rich text editor — bold, italic, headings, checklists, and more
+📁 Folders & tags to keep notes organised
+🔒 Secure notes protected by pattern or password
+☁️ Google Drive backup & restore
+🌙 Comfy Light and Comfy Dark themes
+📅 Calendar view for date-based browsing
+🎤 Voice recordings and image attachments
+🔍 Full-text search across all your notes
+
+Perfect for journaling, task lists, study notes, and daily ideas.

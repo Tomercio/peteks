@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
@@ -8,6 +9,7 @@ import '../../models/note.dart';
 import '../../services/storage_service.dart';
 import '../../services/image_service.dart';
 import '../../services/share_service.dart';
+import '../../utils/pending_delete.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
@@ -35,6 +37,8 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
   List<String> _tags = [];
   List<String> _imagePaths = [];
   bool _isSaving = false;
+  bool _autoSaveDone = false;
+  Timer? _autoSaveTimer;
 
   // Animation variables
   late AnimationController _saveAnimationController;
@@ -48,8 +52,6 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
   bool _tagAdded = false;
 
   late quill.QuillController _quillController;
-
-  final TextDirection _textDirection = TextDirection.ltr;
 
   // Add a field for the recorder
   FlutterSoundRecorder? _audioRecorder;
@@ -143,6 +145,7 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _autoSaveTimer?.cancel();
     _titleController.removeListener(_onContentChanged);
     _titleController.dispose();
     _saveAnimationController.dispose();
@@ -155,9 +158,18 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
   }
 
   void _onContentChanged() {
-    if (!_isSaving) {
-      setState(() {
-        _hasChanges = true;
+    if (_isSaving) return;
+    setState(() {
+      _hasChanges = true;
+      _autoSaveDone = false;
+    });
+    final autoSave =
+        _storageService.getSetting('autoSave', defaultValue: false) == true;
+    if (autoSave) {
+      _autoSaveTimer?.cancel();
+      _autoSaveTimer = Timer(const Duration(seconds: 2), () async {
+        await _saveNote(showSnackbar: false);
+        if (mounted) setState(() => _autoSaveDone = true);
       });
     }
   }
@@ -347,34 +359,49 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
 
   // Pick image from gallery
   Future<void> _pickImageFromGallery() async {
-    final imagePath = await ImageService.pickImageFromGallery();
-    if (imagePath != null) {
-      setState(() {
-        _imagePaths.add(imagePath);
-        _hasChanges = true;
-      });
-      final shouldAutoSave =
-          _storageService.getSetting('autoSave', defaultValue: false) == true;
-      if (shouldAutoSave) {
-        _saveNote(showSnackbar: false);
+    try {
+      final imagePath = await ImageService.pickImageFromGallery();
+      if (imagePath != null) {
+        setState(() {
+          _imagePaths.add(imagePath);
+          _hasChanges = true;
+        });
+        if (_isAutoSaveOn) _saveNote(showSnackbar: false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not pick image: ${_friendlyError(e)}')),
+        );
       }
     }
   }
 
   // Take new photo
   Future<void> _takePhoto() async {
-    final imagePath = await ImageService.takePhoto();
-    if (imagePath != null) {
-      setState(() {
-        _imagePaths.add(imagePath);
-        _hasChanges = true;
-      });
-      final shouldAutoSave =
-          _storageService.getSetting('autoSave', defaultValue: false) == true;
-      if (shouldAutoSave) {
-        _saveNote(showSnackbar: false);
+    try {
+      final imagePath = await ImageService.takePhoto();
+      if (imagePath != null) {
+        setState(() {
+          _imagePaths.add(imagePath);
+          _hasChanges = true;
+        });
+        if (_isAutoSaveOn) _saveNote(showSnackbar: false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not take photo: ${_friendlyError(e)}')),
+        );
       }
     }
+  }
+
+  String _friendlyError(Object e) {
+    final msg = e.toString();
+    if (msg.contains('permission')) return 'Permission denied';
+    if (msg.contains('network') || msg.contains('socket')) return 'Network error';
+    return 'Something went wrong';
   }
 
   // Show and manage images
@@ -504,33 +531,17 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _deleteNote() async {
-    // Show confirmation dialog
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete note?'),
-        content: const Text('This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('CANCEL'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('DELETE'),
-          ),
-        ],
-      ),
-    );
-    if (confirm == true) {
-      // Delete images
-      for (final imagePath in _note.imagePaths) {
-        await ImageService.deleteImage(imagePath);
-      }
-      await _storageService.deleteNote(_note.id);
-      if (!mounted) return;
-      Navigator.of(context).pop(true);
-    }
+    // Save current note state so undo can restore it
+    final noteToDelete = _note;
+    final imagePathsSnapshot = List<String>.from(_imagePaths);
+
+    // Navigate back immediately, passing the note id as pending-delete
+    if (!mounted) return;
+    Navigator.of(context).pop({'pendingDelete': noteToDelete.id});
+
+    // The home screen handles the actual delete + undo SnackBar
+    // We store the note snapshot in a static so home_screen can access it
+    PendingDelete.set(noteToDelete, imagePathsSnapshot);
   }
 
   @override
@@ -605,24 +616,50 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
               ),
             ),
             const SizedBox(width: 4),
-            // Save icon with animation
-            AnimatedBuilder(
-              animation: _saveAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: 1.0 + (_saveAnimation.value * 0.2),
-                  child: IconButton(
-                    icon: Icon(
-                      _isSaving ? Icons.hourglass_empty : Icons.save,
-                      color: appBarIconColor,
-                      size: 20,
+            // Save button or auto-save indicator
+            if (_isAutoSaveOn)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: _isSaving
+                      ? SizedBox(
+                          key: const ValueKey('saving'),
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: appBarIconColor.withAlpha(128),
+                          ),
+                        )
+                      : _autoSaveDone
+                          ? Icon(
+                              key: const ValueKey('saved'),
+                              Icons.check,
+                              size: 16,
+                              color: appBarIconColor.withAlpha(160),
+                            )
+                          : const SizedBox(key: ValueKey('idle'), width: 16),
+                ),
+              )
+            else
+              AnimatedBuilder(
+                animation: _saveAnimation,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: 1.0 + (_saveAnimation.value * 0.2),
+                    child: IconButton(
+                      icon: Icon(
+                        _isSaving ? Icons.hourglass_empty : Icons.save,
+                        color: appBarIconColor,
+                        size: 20,
+                      ),
+                      onPressed: _isSaving ? null : _saveNote,
+                      tooltip: _isSaving ? 'Saving...' : 'Save',
                     ),
-                    onPressed: _isSaving ? null : _saveNote,
-                    tooltip: _isSaving ? 'Saving...' : 'Save',
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
             const SizedBox(width: 4),
             // Popup menu
             PopupMenuButton<String>(
@@ -905,6 +942,9 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                       ),
                     ),
 
+                    // Word / character count
+                    _buildWordCount(),
+
                     // Quill toolbar and RTL toggle in a row
                     Container(
                       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -930,10 +970,12 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                               config: quill.QuillSimpleToolbarConfig(
                                 showSubscript: false,
                                 showSuperscript: false,
-                                showIndent: false,
+                                showIndent: true,
                                 showDirection: false,
                                 showFontFamily: false,
                                 showAlignmentButtons: true,
+                                showListBullets: true,
+                                showListNumbers: true,
                               ),
                             ),
                           ],
@@ -956,22 +998,19 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                       ),
                       child: Stack(
                         children: [
-                          // Editor
+                          // Editor — Directionality is auto-detected per content
                           FadeTransition(
                             opacity: _contentAnimation,
-                            child: Directionality(
-                              textDirection: _textDirection,
-                              child: quill.QuillEditor(
-                                controller: _quillController,
-                                scrollController: _scrollController,
-                                focusNode: _editorFocusNode,
-                                config: quill.QuillEditorConfig(
-                                  placeholder: 'Write your note...',
-                                  padding: const EdgeInsets.all(16),
-                                  autoFocus: false,
-                                  expands: false,
-                                  scrollable: true,
-                                ),
+                            child: quill.QuillEditor(
+                              controller: _quillController,
+                              scrollController: _scrollController,
+                              focusNode: _editorFocusNode,
+                              config: quill.QuillEditorConfig(
+                                placeholder: 'Write your note...',
+                                padding: const EdgeInsets.all(16),
+                                autoFocus: false,
+                                expands: false,
+                                scrollable: true,
                               ),
                             ),
                           ),
@@ -1134,6 +1173,18 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
     );
   }
 
+  String _generateSalt() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    return base64Url.encode(bytes);
+  }
+
+  String _hashWithSalt(String input, String salt) {
+    final key = utf8.encode(salt);
+    final hmac = Hmac(sha256, key);
+    return hmac.convert(utf8.encode(input)).toString();
+  }
+
   void _showSecureNoteDialog() {
     showDialog(
       context: context,
@@ -1150,8 +1201,83 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                 _showPatternSetupDialog();
               },
             ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.lock_outline),
+              label: const Text('Create Password'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showPasswordSetupDialog();
+              },
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showPasswordSetupDialog() {
+    final TextEditingController passController = TextEditingController();
+    final TextEditingController confirmController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Create Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: passController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Password'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: confirmController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Confirm Password'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () {
+              final pass = passController.text;
+              if (pass.length < 4) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Password must be at least 4 characters')),
+                );
+                return;
+              }
+              if (pass != confirmController.text) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Passwords do not match')),
+                );
+                return;
+              }
+              final salt = _generateSalt();
+              final hash = _hashWithSalt(pass, salt);
+              setState(() {
+                _note = _note.copyWith(
+                  isSecure: true,
+                  securityType: 'password',
+                  securityHash: hash,
+                  securitySalt: salt,
+                );
+                _hasChanges = true;
+              });
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Password set for note')),
+              );
+            },
+            child: const Text('SET'),
+          ),
+        ],
       ),
     );
   }
@@ -1209,13 +1335,15 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                 );
                 return;
               }
-              final hash =
-                  sha256.convert(utf8.encode(input.join('-'))).toString();
+              final salt = _generateSalt();
+              final hash = _hashWithSalt(input.join('-'), salt);
               setState(() {
                 _note = _note.copyWith(
-                    isSecure: true,
-                    securityType: 'pattern',
-                    securityHash: hash);
+                  isSecure: true,
+                  securityType: 'pattern',
+                  securityHash: hash,
+                  securitySalt: salt,
+                );
                 _hasChanges = true;
               });
               Navigator.of(context).pop();
@@ -1320,6 +1448,28 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildWordCount() {
+    final plainText = _quillController.document.toPlainText();
+    final chars = plainText.replaceAll('\n', '').length;
+    final words = plainText
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .length;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Opacity(
+        opacity: 0.45,
+        child: Text(
+          '$words words · $chars characters',
+          style: const TextStyle(fontSize: 11, fontFamily: 'Nunito'),
+        ),
+      ),
+    );
+  }
+
+  bool get _isAutoSaveOn =>
+      _storageService.getSetting('autoSave', defaultValue: false) == true;
+
   void _showShareOptions() {
     showModalBottomSheet(
       context: context,
@@ -1364,3 +1514,4 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
     );
   }
 }
+

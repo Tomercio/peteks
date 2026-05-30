@@ -1,0 +1,38 @@
+default_platform(:android)
+
+platform :android do
+  # Build the release AAB
+  private_lane :build_bundle do
+    Dir.chdir("../..") do
+      sh "flutter build appbundle --release --flavor prod --dart-define=FLAVOR=prod"
+    end
+  end
+
+  desc "Upload to Play Store Internal Testing track"
+  lane :internal do
+    build_bundle
+    upload_to_play_store(
+      track: "internal",
+      aab: "../build/app/outputs/bundle/prodRelease/app-prod-release.aab",
+      skip_upload_apk: true,
+    )
+  end
+
+  desc "Promote Internal → Beta (Open/Closed Testing)"
+  lane :beta do
+    upload_to_play_store(
+      track: "internal",
+      track_promote_to: "beta",
+      skip_upload_changelogs: false,
+    )
+  end
+
+  desc "Promote Beta → Production"
+  lane :production do
+    upload_to_play_store(
+      track: "beta",
+      track_promote_to: "production",
+      skip_upload_changelogs: false,
+    )
+  end
+end

@@ -8,7 +8,6 @@ import 'services/storage_service.dart';
 import 'services/image_service.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'providers/theme_provider.dart';
 import 'ui/screens/splash_screen.dart';
 import 'services/google_drive_service.dart';
 
@@ -122,12 +121,7 @@ void main() async {
     await GoogleDriveService().signInSilently();
   }
 
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
-      child: MyApp(storageService: storageService),
-    ),
-  );
+  runApp(MyApp(storageService: storageService));
 }
 
 class MyApp extends StatefulWidget {
@@ -184,38 +178,34 @@ class _MyAppState extends State<MyApp> {
       child: Consumer<ThemeService>(
         builder: (context, themeService, _) {
           final themeMode = themeService.themeMode;
-          return Consumer<ThemeProvider>(
-            builder: (context, themeProvider, child) {
-              return MaterialApp(
-                title: 'Peteks',
-                debugShowCheckedModeBanner: false,
-                navigatorKey: MyApp.navigatorKey,
-                themeMode: switch (themeMode) {
-                  AppThemeMode.system => ThemeMode.system,
-                  AppThemeMode.comfyLight => ThemeMode.light,
-                  AppThemeMode.comfyDark => ThemeMode.dark,
-                },
-                theme: comfyLightTheme,
-                darkTheme: comfyDarkTheme,
-                home: const SplashScreen(),
-                routes: {
-                  '/settings': (context) => const SettingsScreen(),
-                  '/privacy': (context) => const PrivacyPolicyScreen(),
-                  '/terms': (context) => const TermsScreen(),
-                  '/about': (context) => const AboutScreen(),
-                },
-                localizationsDelegates: const [
-                  GlobalMaterialLocalizations.delegate,
-                  GlobalCupertinoLocalizations.delegate,
-                  GlobalWidgetsLocalizations.delegate,
-                  FlutterQuillLocalizations.delegate,
-                ],
-                supportedLocales: const [
-                  Locale('en'),
-                  // Add more locales if needed
-                ],
-              );
+          return MaterialApp(
+            title: 'Peteks',
+            debugShowCheckedModeBanner: false,
+            navigatorKey: MyApp.navigatorKey,
+            themeMode: switch (themeMode) {
+              AppThemeMode.system => ThemeMode.system,
+              AppThemeMode.comfyLight => ThemeMode.light,
+              AppThemeMode.comfyDark => ThemeMode.dark,
             },
+            theme: comfyLightTheme,
+            darkTheme: comfyDarkTheme,
+            home: const SplashScreen(),
+            routes: {
+              '/settings': (context) => const SettingsScreen(),
+              '/privacy': (context) => const PrivacyPolicyScreen(),
+              '/terms': (context) => const TermsScreen(),
+              '/about': (context) => const AboutScreen(),
+            },
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              FlutterQuillLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+              Locale('he'), // Hebrew for RTL content support
+            ],
           );
         },
       ),

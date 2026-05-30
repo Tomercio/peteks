@@ -59,6 +59,12 @@ class Note extends HiveObject {
   @HiveField(17)
   String? securityHash;
 
+  @HiveField(18)
+  String? securitySalt;
+
+  @HiveField(19)
+  String? folderId;
+
   Note({
     String? id,
     this.title = '',
@@ -78,6 +84,8 @@ class Note extends HiveObject {
     this.isSecure = false,
     this.securityType,
     this.securityHash,
+    this.securitySalt,
+    this.folderId,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         modifiedAt = modifiedAt ?? DateTime.now(),
@@ -107,6 +115,8 @@ class Note extends HiveObject {
     bool? isSecure,
     String? securityType,
     String? securityHash,
+    String? securitySalt,
+    String? folderId,
   }) {
     return Note(
       id: id,
@@ -127,6 +137,8 @@ class Note extends HiveObject {
       isSecure: isSecure ?? this.isSecure,
       securityType: securityType ?? this.securityType,
       securityHash: securityHash ?? this.securityHash,
+      securitySalt: securitySalt ?? this.securitySalt,
+      folderId: folderId ?? this.folderId,
     );
   }
 
@@ -164,6 +176,8 @@ class Note extends HiveObject {
       'isSecure': isSecure,
       'securityType': securityType,
       'securityHash': securityHash,
+      'securitySalt': securitySalt,
+      'folderId': folderId,
     };
   }
 
@@ -188,6 +202,8 @@ class Note extends HiveObject {
       isSecure: json['isSecure'] ?? false,
       securityType: json['securityType'],
       securityHash: json['securityHash'],
+      securitySalt: json['securitySalt'],
+      folderId: json['folderId'],
     );
   }
 }

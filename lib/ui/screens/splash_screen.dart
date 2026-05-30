@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../services/storage_service.dart';
 import 'home_screen.dart';
+import 'onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -26,14 +29,26 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _controller.forward();
 
-    // Navigate to HomeScreen after the animation
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
-      }
-    });
+    Future.delayed(const Duration(seconds: 2), _navigate);
+  }
+
+  Future<void> _navigate() async {
+    if (!mounted) return;
+    final storage = Provider.of<StorageService>(context, listen: false);
+    final hasSeen =
+        storage.getSetting('hasSeenOnboarding', defaultValue: false) == true;
+
+    if (!hasSeen) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+      );
+      await storage.saveSetting('hasSeenOnboarding', true);
+    }
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
   }
 
   @override
@@ -52,10 +67,7 @@ class _SplashScreenState extends State<SplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/peteks.png',
-                height: 150,
-              ),
+              Image.asset('assets/peteks.png', height: 150),
             ],
           ),
         ),
