@@ -23,7 +23,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Last updated: May 2025',
+              'Last updated: May 2026',
               style: TextStyle(
                 color: Colors.grey,
               ),
@@ -38,7 +38,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _buildSection('Children’s Privacy',
                 'Peteks is not intended for children under 13. We do not knowingly collect information from children.'),
             _buildSection('User Rights',
-                'You have the right to delete your data at any time by uninstalling the app. For any questions, contact us at info.peteks@gmail.com.'),
+                'You have the right to delete your data at any time by uninstalling the app. For any questions, contact us at info@peteksapp.com.'),
             _buildSection('Changes to This Policy',
                 'We may update our Privacy Policy from time to time. Changes will be posted in the app or on our website.'),
             _buildSection(
@@ -56,7 +56,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _buildSection(
               'Contact',
               'If you have any questions about this Privacy Policy, '
-                  'please contact us at info.peteks@gmail.com',
+                  'please contact us at info@peteksapp.com or visit peteksapp.com',
             ),
             const SizedBox(height: 32),
             Center(

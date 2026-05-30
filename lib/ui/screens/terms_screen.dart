@@ -23,7 +23,7 @@ class TermsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Last updated: May 2025',
+              'Last updated: May 2026',
               style: TextStyle(
                 color: Colors.grey,
               ),
@@ -67,7 +67,7 @@ class TermsScreen extends StatelessWidget {
             ),
             _buildSection(
               '10. Contact',
-              'For any questions or concerns, contact us at info.peteks@gmail.com.',
+              'For any questions or concerns, contact us at info@peteksapp.com.',
             ),
             _buildSection(
               '11. Changes to Terms',
