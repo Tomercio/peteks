@@ -1149,18 +1149,21 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             // Folder chips
             ...folders.map((folder) => Padding(
                   padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
-                  child: ChoiceChip(
-                    avatar: Icon(folder.icon, size: 16, color: folder.color),
-                    label: Text(folder.name),
-                    selected: _selectedFolderId == folder.id,
-                    showCheckmark: false,
-                    onSelected: (_) {
-                      setState(() {
-                        _selectedFolderId =
-                            _selectedFolderId == folder.id ? null : folder.id;
-                        _applyFilters();
-                      });
-                    },
+                  child: GestureDetector(
+                    onLongPress: () => _showFolderOptionsMenu(folder),
+                    child: ChoiceChip(
+                      avatar: Icon(folder.icon, size: 16, color: folder.color),
+                      label: Text(folder.name),
+                      selected: _selectedFolderId == folder.id,
+                      showCheckmark: false,
+                      onSelected: (_) {
+                        setState(() {
+                          _selectedFolderId =
+                              _selectedFolderId == folder.id ? null : folder.id;
+                          _applyFilters();
+                        });
+                      },
+                    ),
                   ),
                 )),
             // New folder button — icon only
@@ -1194,6 +1197,74 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       },
                     ),
                   )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFolderOptionsMenu(Folder folder) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.withAlpha(80),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: [
+                  Icon(folder.icon, color: folder.color, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    folder.name,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontFamily: 'Nunito'),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('Rename', style: TextStyle(fontFamily: 'Nunito')),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _showFolderDialog(folder);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: const Text('Delete Folder',
+                  style: TextStyle(color: Colors.red, fontFamily: 'Nunito')),
+              onTap: () async {
+                Navigator.of(ctx).pop();
+                await _storageService.deleteFolder(folder.id);
+                if (_selectedFolderId == folder.id) {
+                  setState(() {
+                    _selectedFolderId = null;
+                    _loadNotes();
+                  });
+                } else {
+                  setState(() => _loadNotes());
+                }
+              },
+            ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
