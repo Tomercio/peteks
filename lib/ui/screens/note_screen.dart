@@ -1016,6 +1016,8 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
                                 showAlignmentButtons: true,
                                 showListBullets: true,
                                 showListNumbers: true,
+                                showUndo: true,
+                                showRedo: true,
                               ),
                             ),
                             // RTL / LTR toggle

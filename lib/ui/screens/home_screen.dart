@@ -640,10 +640,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     _applyFilters();
                   });
                 },
-                child: CustomPaint(
-                  size: const Size(28, 28),
-                  painter: _FoldedCornerButtonPainter(),
-                ),
+                child: const SizedBox(width: 44, height: 44),
               ),
             ),
 
