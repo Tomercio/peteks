@@ -66,8 +66,17 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
     _tags = List.from(_note.tags);
     _imagePaths = List.from(_note.imagePaths);
 
-    // Initialize QuillController with a default document
-    final doc = quill.Document();
+    // Initialize QuillController with actual content immediately (no setState swap)
+    quill.Document doc;
+    try {
+      if (_note.content.isNotEmpty) {
+        doc = quill.Document.fromJson(jsonDecode(_note.content));
+      } else {
+        doc = quill.Document();
+      }
+    } catch (_) {
+      doc = quill.Document()..insert(0, _note.content);
+    }
     _quillController = quill.QuillController(
       document: doc,
       selection: const TextSelection.collapsed(offset: 0),
@@ -110,29 +119,8 @@ class _NoteScreenState extends State<NoteScreen> with TickerProviderStateMixin {
     });
   }
 
-  Future<void> _initializeEditor() async {
-    try {
-      if (_note.content.isNotEmpty) {
-        final doc = quill.Document.fromJson(jsonDecode(_note.content));
-        setState(() {
-          _quillController = quill.QuillController(
-            document: doc,
-            selection: const TextSelection.collapsed(offset: 0),
-          );
-        });
-      }
-    } catch (e) {
-      // If JSON parsing fails, create a new document with the content as plain text
-      final doc = quill.Document()..insert(0, _note.content);
-      setState(() {
-        _quillController = quill.QuillController(
-          document: doc,
-          selection: const TextSelection.collapsed(offset: 0),
-        );
-      });
-    }
-
-    // Listen for changes
+  void _initializeEditor() {
+    // Content already loaded in initState — just attach listeners here
     _titleController.addListener(_onContentChanged);
     _quillController.document.changes.listen((event) {
       _onContentChanged();
