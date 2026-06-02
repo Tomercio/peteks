@@ -114,11 +114,11 @@ void main() async {
   // Initialize critical services before runApp
   await ImageService.init();
 
-  // Persistent Google sign-in if user previously signed in
+  // Persistent Google sign-in in background — don't block startup
   final googleSignedIn =
       storageService.getSetting('google_signed_in', defaultValue: false);
   if (googleSignedIn == true) {
-    await GoogleDriveService().signInSilently();
+    GoogleDriveService().signInSilently(); // no await — runs in background
   }
 
   runApp(MyApp(storageService: storageService));

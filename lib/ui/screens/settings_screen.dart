@@ -269,7 +269,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 context: context,
                 applicationName: 'Peteks',
                 applicationVersion: _version,
-                applicationLegalese: '© ${DateTime.now().year} Tomer (Peteks). All rights reserved.\nNunito font licensed under SIL OFL 1.1.',
+                applicationLegalese: '© ${DateTime.now().year} Peteks. All rights reserved.\nNunito font licensed under SIL OFL 1.1.',
                 applicationIcon: Image.asset(
                   'assets/peteks.png',
                   height: 64,

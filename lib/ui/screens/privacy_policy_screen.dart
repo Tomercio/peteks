@@ -65,7 +65,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             const SizedBox(height: 32),
 
             _Section(context, '1. Who We Are',
-              'Peteks is a personal notes application developed by Tomer (Peteks), an individual developer based in Israel.\n\nContact: info@peteksapp.com\nWebsite: peteksapp.com',
+              'Peteks is a personal notes application developed by an independent developer.\n\nContact: info@peteksapp.com\nWebsite: peteksapp.com',
             ),
 
             _Section(context, '2. What Data We Collect',

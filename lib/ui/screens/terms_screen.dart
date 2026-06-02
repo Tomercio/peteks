@@ -72,7 +72,7 @@ class TermsScreen extends StatelessWidget {
             ),
 
             _Section(context, '5. Limitation of Liability — Data Loss', coral,
-              'TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, PETEKS AND ITS DEVELOPER (TOMER, AN INDIVIDUAL DEVELOPER BASED IN ISRAEL) SHALL NOT BE LIABLE FOR:\n\n• Any loss, corruption, or deletion of your notes or data, whether caused by app bugs, device failure, accidental deletion, uninstallation, or any other reason.\n• Any indirect, incidental, special, consequential, or punitive damages.\n• Loss of business, profits, revenue, or data.\n\nYOU ARE SOLELY RESPONSIBLE FOR BACKING UP YOUR OWN DATA. We strongly recommend enabling Google Drive backup in the app settings.',
+              'TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, PETEKS AND ITS DEVELOPER SHALL NOT BE LIABLE FOR:\n\n• Any loss, corruption, or deletion of your notes or data, whether caused by app bugs, device failure, accidental deletion, uninstallation, or any other reason.\n• Any indirect, incidental, special, consequential, or punitive damages.\n• Loss of business, profits, revenue, or data.\n\nYOU ARE SOLELY RESPONSIBLE FOR BACKING UP YOUR OWN DATA. We strongly recommend enabling Google Drive backup in the app settings.',
             ),
 
             _Section(context, '6. User Responsibilities', coral,
@@ -88,7 +88,7 @@ class TermsScreen extends StatelessWidget {
             ),
 
             _Section(context, '9. Intellectual Property', coral,
-              'All intellectual property rights in the App (including its design, code, and branding) are owned by Tomer (Peteks). The Nunito font is licensed under the SIL Open Font License 1.1. You may not copy, modify, distribute, or create derivative works of the App without prior written permission.',
+              'All intellectual property rights in the App (including its design, code, and branding) are owned by Peteks. The Nunito font is licensed under the SIL Open Font License 1.1. You may not copy, modify, distribute, or create derivative works of the App without prior written permission.',
             ),
 
             _Section(context, '10. Termination', coral,
@@ -100,7 +100,7 @@ class TermsScreen extends StatelessWidget {
             ),
 
             _Section(context, '12. Governing Law', coral,
-              'These Terms are governed by and construed in accordance with the laws of the State of Israel, without regard to its conflict of law principles. Any disputes shall be subject to the exclusive jurisdiction of the courts of Israel.',
+              'These Terms shall be governed by applicable law. Any disputes arising from these Terms or the use of the App shall be resolved through good-faith negotiation. If a resolution cannot be reached, disputes shall be subject to binding arbitration or the jurisdiction of the competent courts where the developer is located.',
             ),
 
             _Section(context, '13. Contact', coral,

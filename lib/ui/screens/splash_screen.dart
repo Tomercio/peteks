@@ -20,16 +20,16 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
     _animation = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeIn,
+      curve: Curves.easeOut,
     );
     _controller.forward();
 
-    Future.delayed(const Duration(seconds: 2), _navigate);
+    Future.delayed(const Duration(milliseconds: 800), _navigate);
   }
 
   Future<void> _navigate() async {
