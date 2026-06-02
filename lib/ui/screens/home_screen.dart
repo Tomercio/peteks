@@ -633,6 +633,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               left: 0,
               bottom: 0,
               child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () {
                   if (_showSecureHint) _dismissSecureHint();
                   setState(() {
